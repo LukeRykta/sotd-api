@@ -11,7 +11,7 @@ public class SpotifyProperties {
     private URI accountsBaseUrl = URI.create("https://accounts.spotify.com");
     private String clientId = "";
     private String clientSecret = "";
-    private URI redirectUri = URI.create("http://localhost:8080/api/spotify/callback");
+    private URI redirectUri = URI.create("http://127.0.0.1:8080/api/spotify/callback");
     private final Polling polling = new Polling();
 
     public URI getBaseUrl() {

@@ -119,15 +119,6 @@ The intended local callback URI is:
 
 - `http://127.0.0.1:8080/api/spotify/callback`
 
-## Reports
-
-Detailed project notes live in:
-
-- `ai-reports/sotd-arch-report.md`
-- `ai-reports/tech-stack-recommendation-report.md`
-- `ai-reports/stack-alignment-implementation-report.md`
-- `ai-reports/local-postgres-setup-report.md`
-
 ## Next Recommended Work
 
 1. Implement Spotify connect/callback endpoints.
