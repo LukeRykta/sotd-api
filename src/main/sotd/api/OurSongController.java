@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import sotd.config.OpenApiConfig;
-import sotd.song.OurSongPeriodType;
 import sotd.song.OurSongResponse;
 import sotd.song.OurSongService;
+import sotd.song.SongPeriodType;
 
 @RestController
 @RequestMapping("/api/users/{appUserId}")
@@ -58,7 +58,7 @@ public class OurSongController {
                     description = "Comparison period.",
                     in = ParameterIn.QUERY
             )
-            @RequestParam(defaultValue = "DAY") OurSongPeriodType period
+            @RequestParam(defaultValue = "DAY") SongPeriodType period
     ) {
         return ourSongService.getCurrentSharedSong(appUserId, otherUserId, period);
     }

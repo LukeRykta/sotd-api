@@ -34,7 +34,7 @@ public class OurSongService {
         this.clock = clock;
     }
 
-    public OurSongResponse getCurrentSharedSong(UUID appUserId, UUID otherUserId, OurSongPeriodType periodType) {
+    public OurSongResponse getCurrentSharedSong(UUID appUserId, UUID otherUserId, SongPeriodType periodType) {
         if (appUserId.equals(otherUserId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Our-song comparison requires two distinct users.");
         }
@@ -53,7 +53,7 @@ public class OurSongService {
         LocalDate anchorDate = clock.instant()
                 .atZone(ZoneId.of(linkedAccount.get().timezone()))
                 .toLocalDate();
-        OurSongPeriodType.PeriodWindow window = periodType.resolveWindow(anchorDate);
+        SongPeriodType.PeriodWindow window = periodType.resolveWindow(anchorDate);
 
         if (spotifyAccountRepository.findAccountIdentityByAppUserId(otherUserId).isEmpty()) {
             return OurSongResponse.unlinked(

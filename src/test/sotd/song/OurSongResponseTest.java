@@ -16,7 +16,7 @@ class OurSongResponseTest {
         OurSongResponse response = OurSongResponse.unlinked(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.DAY,
+                SongPeriodType.DAY,
                 LocalDate.parse("2026-03-17"),
                 "No Spotify account is linked for the comparison user."
         );
@@ -37,13 +37,13 @@ class OurSongResponseTest {
         OurSongResponse response = OurSongResponse.noCommonSong(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.WEEK,
+                SongPeriodType.WEEK,
                 LocalDate.parse("2026-03-16")
         );
 
         assertThat(response.status()).isEqualTo("no-common-song");
         assertThat(response.message()).isEqualTo("No common song was found for the requested period.");
-        assertThat(response.periodType()).isEqualTo(OurSongPeriodType.WEEK);
+        assertThat(response.periodType()).isEqualTo(SongPeriodType.WEEK);
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-16"));
         assertThat(response.spotifyTrackId()).isNull();
     }
@@ -55,7 +55,7 @@ class OurSongResponseTest {
         OurSongMatchView match = new OurSongMatchView(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.DAY,
+                SongPeriodType.DAY,
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
