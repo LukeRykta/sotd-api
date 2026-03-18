@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Schema(description = "Song-of-the-day result for a specific application user.")
-public record SongOfDayResponse(
+@Schema(description = "Top-song result for a specific application user and period.")
+public record TopSongResponse(
         @Schema(description = "High-level response state.", allowableValues = {"ready", "pending", "unlinked"})
         String status,
         @Schema(description = "Human-readable explanation of the current state.")
@@ -16,23 +16,29 @@ public record SongOfDayResponse(
         String spotifyUserId,
         @Schema(description = "Spotify display name when available.")
         String displayName,
-        @Schema(description = "Local day used for the winner calculation.")
+        @Schema(description = "Requested ranking period.")
+        SongPeriodType periodType,
+        @Schema(description = "Local period start used for the winner calculation.")
         LocalDate periodStartLocal,
         @Schema(description = "Winning Spotify track id when a winner exists.")
         String spotifyTrackId,
         @Schema(description = "Winning track name when a winner exists.")
         String trackName,
-        @Schema(description = "Winning play count for the selected day.")
-        Integer playCount
+        @Schema(description = "Winning play count for the selected period.")
+        Integer playCount,
+        @Schema(description = "Deterministic tie-break rule applied when multiple songs tie.")
+        String tieBreakRule
 ) {
 
-    public static SongOfDayResponse unlinked(UUID appUserId) {
-        return new SongOfDayResponse(
+    public static TopSongResponse unlinked(UUID appUserId, SongPeriodType periodType, LocalDate periodStartLocal) {
+        return new TopSongResponse(
                 "unlinked",
                 "No Spotify account is linked for this user.",
                 appUserId,
                 null,
                 null,
+                periodType,
+                periodStartLocal,
                 null,
                 null,
                 null,
@@ -40,13 +46,15 @@ public record SongOfDayResponse(
         );
     }
 
-    public static SongOfDayResponse pending(UUID appUserId) {
-        return new SongOfDayResponse(
+    public static TopSongResponse pending(UUID appUserId, SongPeriodType periodType, LocalDate periodStartLocal) {
+        return new TopSongResponse(
                 "pending",
-                "No song-of-the-day data has been computed yet.",
+                "No top-song data has been computed yet for the requested period.",
                 appUserId,
                 null,
                 null,
+                periodType,
+                periodStartLocal,
                 null,
                 null,
                 null,
@@ -54,17 +62,19 @@ public record SongOfDayResponse(
         );
     }
 
-    public static SongOfDayResponse available(SongOfDayWinnerView winner) {
-        return new SongOfDayResponse(
+    public static TopSongResponse available(TopSongWinnerView winner) {
+        return new TopSongResponse(
                 "ready",
-                "Song-of-the-day data is available.",
+                "Top-song data is available.",
                 winner.appUserId(),
                 winner.spotifyUserId(),
                 winner.displayName(),
+                winner.periodType(),
                 winner.periodStartLocal(),
                 winner.spotifyTrackId(),
                 winner.trackName(),
-                winner.playCount()
+                winner.playCount(),
+                winner.tieBreakRule()
         );
     }
 }

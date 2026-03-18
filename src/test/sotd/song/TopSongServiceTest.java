@@ -14,72 +14,89 @@ import org.junit.jupiter.api.Test;
 import sotd.spotify.persistence.SpotifyAccountRepository;
 import sotd.spotify.persistence.SpotifyAccountRepository.LinkedSpotifyAccountIdentity;
 
-class SongOfDayServiceTest {
+class TopSongServiceTest {
 
     @Test
-    void getCurrentSongOfDayReturnsCurrentWinnerForRequestedAppUser() {
-        SongOfDayRepository songOfDayRepository = mock(SongOfDayRepository.class);
+    void getTopSongReturnsCurrentWinnerForRequestedAppUserAndPeriod() {
+        TopSongRepository topSongRepository = mock(TopSongRepository.class);
         SpotifyAccountRepository spotifyAccountRepository = mock(SpotifyAccountRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2026-03-18T03:00:00Z"), ZoneOffset.UTC);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
         when(spotifyAccountRepository.findAccountIdentityByAppUserId(appUserId))
                 .thenReturn(Optional.of(new LinkedSpotifyAccountIdentity(appUserId, "lukerykta", "America/New_York")));
-        when(songOfDayRepository.findCurrentWinner(appUserId, LocalDate.parse("2026-03-17")))
-                .thenReturn(Optional.of(new SongOfDayWinnerView(
+        when(topSongRepository.findTopSong(
+                appUserId,
+                SongPeriodType.WEEK,
+                LocalDate.parse("2026-03-16"),
+                LocalDate.parse("2026-03-23")
+        )).thenReturn(Optional.of(new TopSongWinnerView(
                         appUserId,
                         "lukerykta",
                         "Luke",
                         "America/New_York",
-                        LocalDate.parse("2026-03-17"),
+                        SongPeriodType.WEEK,
+                        LocalDate.parse("2026-03-16"),
                         "track-1",
                         "Track Name",
-                        4
+                        4,
+                        TopSongRepository.TIE_BREAK_RULE
                 )));
 
-        SongOfDayService service = new SongOfDayService(songOfDayRepository, spotifyAccountRepository, clock);
+        TopSongService service = new TopSongService(topSongRepository, spotifyAccountRepository, clock);
 
-        SongOfDayResponse response = service.getCurrentSongOfDay(appUserId);
+        TopSongResponse response = service.getTopSong(appUserId, SongPeriodType.WEEK);
 
         assertThat(response.status()).isEqualTo("ready");
         assertThat(response.appUserId()).isEqualTo(appUserId);
         assertThat(response.spotifyUserId()).isEqualTo("lukerykta");
+        assertThat(response.periodType()).isEqualTo(SongPeriodType.WEEK);
+        assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-16"));
         assertThat(response.trackName()).isEqualTo("Track Name");
         assertThat(response.playCount()).isEqualTo(4);
     }
 
     @Test
-    void getCurrentSongOfDayReturnsUnlinkedWhenNoAccountIsLinked() {
-        SongOfDayRepository songOfDayRepository = mock(SongOfDayRepository.class);
+    void getTopSongReturnsUnlinkedWhenNoAccountIsLinked() {
+        TopSongRepository topSongRepository = mock(TopSongRepository.class);
         SpotifyAccountRepository spotifyAccountRepository = mock(SpotifyAccountRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2026-03-18T03:00:00Z"), ZoneOffset.UTC);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
         when(spotifyAccountRepository.findAccountIdentityByAppUserId(appUserId)).thenReturn(Optional.empty());
 
-        SongOfDayService service = new SongOfDayService(songOfDayRepository, spotifyAccountRepository, clock);
+        TopSongService service = new TopSongService(topSongRepository, spotifyAccountRepository, clock);
 
-        SongOfDayResponse response = service.getCurrentSongOfDay(appUserId);
+        TopSongResponse response = service.getTopSong(appUserId, SongPeriodType.YEAR);
 
-        assertThat(response).isEqualTo(SongOfDayResponse.unlinked(appUserId));
+        assertThat(response).isEqualTo(TopSongResponse.unlinked(appUserId, SongPeriodType.YEAR, null));
     }
 
     @Test
-    void getCurrentSongOfDayReturnsPendingWhenWinnerNotComputedYet() {
-        SongOfDayRepository songOfDayRepository = mock(SongOfDayRepository.class);
+    void getTopSongReturnsPendingWhenWinnerNotComputedYet() {
+        TopSongRepository topSongRepository = mock(TopSongRepository.class);
         SpotifyAccountRepository spotifyAccountRepository = mock(SpotifyAccountRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2026-03-18T03:00:00Z"), ZoneOffset.UTC);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
         when(spotifyAccountRepository.findAccountIdentityByAppUserId(appUserId))
                 .thenReturn(Optional.of(new LinkedSpotifyAccountIdentity(appUserId, "lukerykta", "America/New_York")));
-        when(songOfDayRepository.findCurrentWinner(appUserId, LocalDate.parse("2026-03-17")))
+        when(topSongRepository.findTopSong(
+                appUserId,
+                SongPeriodType.MONTH,
+                LocalDate.parse("2026-03-01"),
+                LocalDate.parse("2026-04-01")
+        ))
                 .thenReturn(Optional.empty());
 
-        SongOfDayService service = new SongOfDayService(songOfDayRepository, spotifyAccountRepository, clock);
+        TopSongService service = new TopSongService(topSongRepository, spotifyAccountRepository, clock);
 
-        SongOfDayResponse response = service.getCurrentSongOfDay(appUserId);
+        TopSongResponse response = service.getTopSong(appUserId, SongPeriodType.MONTH);
 
-        assertThat(response).isEqualTo(SongOfDayResponse.pending(appUserId));
+        assertThat(response).isEqualTo(TopSongResponse.pending(
+                appUserId,
+                SongPeriodType.MONTH,
+                LocalDate.parse("2026-03-01")
+        ));
     }
 }

@@ -1,6 +1,6 @@
 # sotd-api
 
-Private Spring Boot API for tracking Spotify listening history and surfacing user-scoped "song of the day" and pairwise "our song" results backed by PostgreSQL.
+Private Spring Boot API for tracking Spotify listening history and surfacing user-scoped top-song and pairwise our-song results backed by PostgreSQL.
 
 ## Current Status
 
@@ -15,6 +15,7 @@ Implemented now:
 - automatic access-token refresh for polling
 - recently-played polling and ingestion
 - daily song rollups and winner computation
+- period-based top-song reads built from daily rollups
 - pairwise shared-song reads built from daily rollups
 - user-scoped read endpoints under `/api/users/{appUserId}/...`
 
@@ -42,7 +43,7 @@ The long-term goal is to:
 2. bind that Spotify account to a stable upstream `app_user_id`
 3. ingest listening history into PostgreSQL
 4. compute daily, weekly, monthly, and yearly winners from stored play events
-5. expose fast frontend-facing endpoints such as `song-of-the-day` and `our-song`
+5. expose fast frontend-facing endpoints such as `top-song` and `our-song`
 
 ## Project Layout
 
@@ -189,7 +190,8 @@ Local connect flow:
 - complete Spotify auth
 - inspect the linked account with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
 - unlink the Spotify account with `Authorization: Bearer {token}` at `DELETE http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
-- read the winner with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
+- read the top song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/top-song?period=DAY`
+- the older daily alias still works at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
 - read the shared song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY`
 
 If you linked accounts before the `app_user_id` migration, re-run the connect flow through the user-scoped URL so the existing `spotify_account` row is attached to the correct UUID.
@@ -200,4 +202,4 @@ If you linked accounts before the `app_user_id` migration, re-run the connect fl
 2. Decide whether pairwise reads should support explicit date selection in addition to current-period reads.
 3. Add cross-pod poller coordination before scaling beyond one replica.
 4. Add operational dashboards around polling success, lag, and reauthorization status.
-5. Add weekly, monthly, and yearly single-user winner endpoints to match the pairwise period support.
+5. Decide whether the legacy `/song-of-the-day` alias should stay long-term or be retired after frontend adoption of `/top-song`.

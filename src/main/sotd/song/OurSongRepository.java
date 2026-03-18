@@ -24,7 +24,7 @@ public class OurSongRepository {
     public Optional<OurSongMatchView> findBestSharedSong(
             UUID appUserId,
             UUID otherUserId,
-            OurSongPeriodType periodType,
+            SongPeriodType periodType,
             LocalDate periodStartLocal,
             LocalDate periodEndExclusive
     ) {

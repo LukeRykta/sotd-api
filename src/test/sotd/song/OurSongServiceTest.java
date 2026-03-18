@@ -35,13 +35,13 @@ class OurSongServiceTest {
         when(ourSongRepository.findBestSharedSong(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.DAY,
+                SongPeriodType.DAY,
                 LocalDate.parse("2026-03-17"),
                 LocalDate.parse("2026-03-18")
         )).thenReturn(Optional.of(new OurSongMatchView(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.DAY,
+                SongPeriodType.DAY,
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
@@ -53,7 +53,7 @@ class OurSongServiceTest {
 
         OurSongService service = new OurSongService(ourSongRepository, spotifyAccountRepository, clock);
 
-        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.DAY);
+        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.DAY);
 
         assertThat(response.status()).isEqualTo("ready");
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-17"));
@@ -73,7 +73,7 @@ class OurSongServiceTest {
 
         OurSongService service = new OurSongService(ourSongRepository, spotifyAccountRepository, clock);
 
-        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.DAY);
+        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.DAY);
 
         assertThat(response.status()).isEqualTo("unlinked");
         assertThat(response.message()).isEqualTo("No Spotify account is linked for the requesting user.");
@@ -94,7 +94,7 @@ class OurSongServiceTest {
 
         OurSongService service = new OurSongService(ourSongRepository, spotifyAccountRepository, clock);
 
-        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.DAY);
+        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.DAY);
 
         assertThat(response.status()).isEqualTo("unlinked");
         assertThat(response.message()).isEqualTo("No Spotify account is linked for the comparison user.");
@@ -116,22 +116,22 @@ class OurSongServiceTest {
         when(ourSongRepository.findBestSharedSong(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.WEEK,
+                SongPeriodType.WEEK,
                 LocalDate.parse("2026-03-16"),
                 LocalDate.parse("2026-03-23")
         )).thenReturn(Optional.empty());
 
         OurSongService service = new OurSongService(ourSongRepository, spotifyAccountRepository, clock);
 
-        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.WEEK);
+        OurSongResponse response = service.getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.WEEK);
 
         assertThat(response.status()).isEqualTo("no-common-song");
-        assertThat(response.periodType()).isEqualTo(OurSongPeriodType.WEEK);
+        assertThat(response.periodType()).isEqualTo(SongPeriodType.WEEK);
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-16"));
         verify(ourSongRepository).findBestSharedSong(
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.WEEK,
+                SongPeriodType.WEEK,
                 LocalDate.parse("2026-03-16"),
                 LocalDate.parse("2026-03-23")
         );
@@ -146,7 +146,7 @@ class OurSongServiceTest {
 
         OurSongService service = new OurSongService(ourSongRepository, spotifyAccountRepository, clock);
 
-        assertThatThrownBy(() -> service.getCurrentSharedSong(appUserId, appUserId, OurSongPeriodType.DAY))
+        assertThatThrownBy(() -> service.getCurrentSharedSong(appUserId, appUserId, SongPeriodType.DAY))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST))
                 .hasMessageContaining("distinct users");
