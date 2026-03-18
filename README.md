@@ -106,13 +106,13 @@ docker build -t sotd-api:local .
 Run it with environment variables supplied by your platform or an env file:
 
 ```powershell
-docker run --rm -p 8080:8080 --env-file .env sotd-api:local
+docker run --rm -p 8080:8080 --env-file .env -e SPRING_PROFILES_ACTIVE=prod sotd-api:local
 ```
 
 ### Current API shape
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day
+Invoke-RestMethod "http://127.0.0.1:8080/api/users/{appUserId}/top-song?period=DAY"
 ```
 
 Key routes:
@@ -142,6 +142,11 @@ Useful operational endpoints:
 - `GET /actuator/info`
 - `GET /docs`
 - `GET /openapi`
+
+Production profile note:
+
+- use `prod` for production runtime defaults
+- `prod` automatically activates `container`, so structured JSON console logging remains enabled
 
 ## Deployment Note
 
