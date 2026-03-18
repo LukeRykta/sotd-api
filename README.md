@@ -51,7 +51,6 @@ This project intentionally uses a flatter Java layout than the default IntelliJ/
 - `src/main/sotd` - application code
 - `src/main/resources` - app config and Flyway migrations
 - `src/test/sotd` - tests
-- `ai-reports` - architecture, stack, and setup reports
 
 ## Local Development
 
@@ -101,6 +100,7 @@ Key routes:
 - `GET /api/users/{appUserId}/spotify/connect`
 - `GET /api/spotify/callback`
 - `GET /api/users/{appUserId}/spotify/connection`
+- `DELETE /api/users/{appUserId}/spotify/connection`
 - `GET /api/users/{appUserId}/song-of-the-day`
 - `GET /api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY|WEEK|MONTH`
 
@@ -142,6 +142,7 @@ Local connect flow:
 - open `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connect?upstreamAuth={token}` in a browser
 - complete Spotify auth
 - inspect the linked account with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
+- unlink the Spotify account with `Authorization: Bearer {token}` at `DELETE http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
 - read the winner with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
 - read the shared song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY`
 
