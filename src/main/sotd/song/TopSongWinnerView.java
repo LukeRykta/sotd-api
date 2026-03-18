@@ -4,16 +4,18 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * Read-model projection for a computed song-of-the-day winner.
+ * Read-model projection for the highest-ranked song in one period for one user.
  */
-public record SongOfDayWinnerView(
+public record TopSongWinnerView(
         UUID appUserId,
         String spotifyUserId,
         String displayName,
         String timezone,
+        SongPeriodType periodType,
         LocalDate periodStartLocal,
         String spotifyTrackId,
         String trackName,
-        int playCount
+        int playCount,
+        String tieBreakRule
 ) {
 }

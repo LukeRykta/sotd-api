@@ -15,7 +15,7 @@ public record OurSongResponse(
         @Schema(description = "Stable upstream application user UUID for the comparison profile.")
         UUID otherUserId,
         @Schema(description = "Requested comparison period.")
-        OurSongPeriodType periodType,
+        SongPeriodType periodType,
         @Schema(description = "Local period start used for the comparison window.")
         LocalDate periodStartLocal,
         @Schema(description = "Winning Spotify track id when a shared song exists.")
@@ -35,7 +35,7 @@ public record OurSongResponse(
     public static OurSongResponse unlinked(
             UUID appUserId,
             UUID otherUserId,
-            OurSongPeriodType periodType,
+            SongPeriodType periodType,
             LocalDate periodStartLocal,
             String message
     ) {
@@ -58,7 +58,7 @@ public record OurSongResponse(
     public static OurSongResponse noCommonSong(
             UUID appUserId,
             UUID otherUserId,
-            OurSongPeriodType periodType,
+            SongPeriodType periodType,
             LocalDate periodStartLocal
     ) {
         return new OurSongResponse(

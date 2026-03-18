@@ -24,7 +24,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("SOTD API")
                         .version("v1")
-                        .description("User-scoped Spotify polling and song-of-the-day API.")
+                        .description("User-scoped Spotify polling, top-song, and shared-song API.")
                         .contact(new Contact().name("SOTD API")))
                 .components(new Components()
                         .addSecuritySchemes(
@@ -43,7 +43,7 @@ public class OpenApiConfig {
                                         .name("upstreamAuth")
                                         .description("Short-lived upstream-issued JWT for browser redirects into the Spotify connect flow.")
                         ))
-                .addTagsItem(new Tag().name("song-of-the-day").description("User-scoped winner reads for profile pages."))
+                .addTagsItem(new Tag().name("top-song").description("User-scoped winner reads for profile pages."))
                 .addTagsItem(new Tag().name("our-song").description("Pairwise shared-song reads for two profile pages."))
                 .addTagsItem(new Tag().name("spotify-auth").description("Spotify account linking and linked-account inspection."));
     }

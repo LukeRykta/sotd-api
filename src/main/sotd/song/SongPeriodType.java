@@ -5,12 +5,12 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 /**
- * Periods supported by the pairwise shared-song endpoint.
+ * Period windows supported by the read endpoints.
  *
  * <p>The current implementation reads from daily rollups and aggregates them into larger windows at
- * query time so week/month support does not require a separate ingestion path yet.
+ * query time, so week/month/year support does not require a separate ingestion path yet.
  */
-public enum OurSongPeriodType {
+public enum SongPeriodType {
     DAY {
         @Override
         public PeriodWindow resolveWindow(LocalDate anchorDate) {
@@ -30,12 +30,19 @@ public enum OurSongPeriodType {
             LocalDate periodStartLocal = anchorDate.withDayOfMonth(1);
             return new PeriodWindow(this, periodStartLocal, periodStartLocal.plusMonths(1));
         }
+    },
+    YEAR {
+        @Override
+        public PeriodWindow resolveWindow(LocalDate anchorDate) {
+            LocalDate periodStartLocal = anchorDate.withDayOfYear(1);
+            return new PeriodWindow(this, periodStartLocal, periodStartLocal.plusYears(1));
+        }
     };
 
     public abstract PeriodWindow resolveWindow(LocalDate anchorDate);
 
     public record PeriodWindow(
-            OurSongPeriodType periodType,
+            SongPeriodType periodType,
             LocalDate periodStartLocal,
             LocalDate periodEndExclusive
     ) {

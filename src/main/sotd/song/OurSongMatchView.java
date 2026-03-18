@@ -9,7 +9,7 @@ import java.util.UUID;
 public record OurSongMatchView(
         UUID appUserId,
         UUID otherUserId,
-        OurSongPeriodType periodType,
+        SongPeriodType periodType,
         LocalDate periodStartLocal,
         String spotifyTrackId,
         String trackName,

@@ -8,9 +8,9 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import sotd.song.OurSongPeriodType;
 import sotd.song.OurSongResponse;
 import sotd.song.OurSongService;
+import sotd.song.SongPeriodType;
 
 class OurSongControllerTest {
 
@@ -24,7 +24,7 @@ class OurSongControllerTest {
                 "Shared-song data is available.",
                 appUserId,
                 otherUserId,
-                OurSongPeriodType.DAY,
+                SongPeriodType.DAY,
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
@@ -33,13 +33,13 @@ class OurSongControllerTest {
                 8,
                 "rule"
         );
-        when(ourSongService.getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.DAY)).thenReturn(expected);
+        when(ourSongService.getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.DAY)).thenReturn(expected);
 
         OurSongController controller = new OurSongController(ourSongService);
 
-        OurSongResponse actual = controller.getOurSong(appUserId, otherUserId, OurSongPeriodType.DAY);
+        OurSongResponse actual = controller.getOurSong(appUserId, otherUserId, SongPeriodType.DAY);
 
         assertThat(actual).isSameAs(expected);
-        verify(ourSongService).getCurrentSharedSong(appUserId, otherUserId, OurSongPeriodType.DAY);
+        verify(ourSongService).getCurrentSharedSong(appUserId, otherUserId, SongPeriodType.DAY);
     }
 }
