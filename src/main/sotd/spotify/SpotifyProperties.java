@@ -2,6 +2,8 @@ package sotd.spotify;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "spotify")
@@ -12,6 +14,9 @@ public class SpotifyProperties {
     private String clientId = "";
     private String clientSecret = "";
     private URI redirectUri = URI.create("http://127.0.0.1:8080/api/spotify/callback");
+    private List<String> scopes = new ArrayList<>();
+    private boolean showDialog;
+    private Duration authStateTtl = Duration.ofMinutes(10);
     private final Polling polling = new Polling();
 
     public URI getBaseUrl() {
@@ -52,6 +57,30 @@ public class SpotifyProperties {
 
     public void setRedirectUri(URI redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public List<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(List<String> scopes) {
+        this.scopes = scopes;
+    }
+
+    public boolean isShowDialog() {
+        return showDialog;
+    }
+
+    public void setShowDialog(boolean showDialog) {
+        this.showDialog = showDialog;
+    }
+
+    public Duration getAuthStateTtl() {
+        return authStateTtl;
+    }
+
+    public void setAuthStateTtl(Duration authStateTtl) {
+        this.authStateTtl = authStateTtl;
     }
 
     public Polling getPolling() {
