@@ -138,6 +138,13 @@ User-scoped routes are protected by a signed upstream auth token. The upstream b
 
 For local development, the tracked `dev` profile disables that upstream JWT requirement so you can test the API without a second backend process. Use manual JWT generation only when you want to test the real auth contract locally.
 
+The Spotify callback now returns a structured JSON error body on failure with:
+
+- `errorCode`
+- `stage`
+- `message`
+- `appUserId` when the callback state was already validated
+
 Useful operational endpoints:
 
 - `GET /actuator/health`
