@@ -277,8 +277,12 @@ What to verify:
 
 - `app.name`
 - `app.version`
+- `build.version`
+- `build.time`
 - `docs.swaggerUiPath`
 - `features.spotifyUnlink = true`
+- `git.commitShortSha`
+- `git.branch`
 - `auth.upstreamJwtEnabled`
 - `polling.recentlyPlayedInterval`
 

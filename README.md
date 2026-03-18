@@ -102,7 +102,10 @@ On startup, Flyway will apply the initial schema migration automatically.
 ### Build container image
 
 ```powershell
-docker build -t sotd-api:local .
+$gitCommit = git rev-parse HEAD
+$gitBranch = git rev-parse --abbrev-ref HEAD
+$imageTag = "sotd-api:local"
+docker build --build-arg GIT_COMMIT=$gitCommit --build-arg GIT_BRANCH=$gitBranch --build-arg IMAGE_TAG=$imageTag -t $imageTag .
 ```
 
 Run it with environment variables supplied by your platform or an env file:
@@ -168,6 +171,15 @@ Custom metrics are now emitted into the Micrometer registry for:
 - `sotd.spotify.poll.oldest_success_age.seconds`
 
 All metrics include the common tag `application=${spring.application.name}`. `/actuator/metrics` is exposed now for internal operational use and should stay off the public internet-facing edge. Prometheus scraping is still a separate deployment decision.
+
+`/actuator/info` now includes build and git metadata when the artifact is built with generated metadata. Useful fields include:
+
+- `build.version`
+- `build.time`
+- `build.imageTag` when `INFO_IMAGE_TAG` or `IMAGE_TAG` is supplied at build/runtime
+- `git.branch`
+- `git.commitSha`
+- `git.commitShortSha`
 
 Production profile note:
 
