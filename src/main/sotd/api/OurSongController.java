@@ -32,7 +32,7 @@ public class OurSongController {
         this.ourSongService = ourSongService;
     }
 
-    @GetMapping("/our-song/{otherUserId}")
+    @GetMapping("/our-song")
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Get the shared song for two users",
@@ -48,8 +48,12 @@ public class OurSongController {
     public OurSongResponse getOurSong(
             @Parameter(description = "Stable upstream application user UUID for the requesting profile.", required = true)
             @PathVariable UUID appUserId,
-            @Parameter(description = "Stable upstream application user UUID for the comparison profile.", required = true)
-            @PathVariable UUID otherUserId,
+            @Parameter(
+                    description = "Stable upstream application user UUID for the comparison profile.",
+                    in = ParameterIn.QUERY,
+                    required = true
+            )
+            @RequestParam UUID otherUserId,
             @Parameter(
                     description = "Comparison period.",
                     in = ParameterIn.QUERY

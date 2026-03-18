@@ -102,7 +102,7 @@ Key routes:
 - `GET /api/spotify/callback`
 - `GET /api/users/{appUserId}/spotify/connection`
 - `GET /api/users/{appUserId}/song-of-the-day`
-- `GET /api/users/{appUserId}/our-song/{otherUserId}?period=DAY|WEEK|MONTH`
+- `GET /api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY|WEEK|MONTH`
 
 The backend does not create users locally. It expects `{appUserId}` to come from your upstream account system.
 
@@ -143,7 +143,7 @@ Local connect flow:
 - complete Spotify auth
 - inspect the linked account with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
 - read the winner with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
-- read the shared song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/our-song/{otherUserId}?period=DAY`
+- read the shared song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY`
 
 If you linked accounts before the `app_user_id` migration, re-run the connect flow through the user-scoped URL so the existing `spotify_account` row is attached to the correct UUID.
 
