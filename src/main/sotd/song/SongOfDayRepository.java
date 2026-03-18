@@ -2,6 +2,7 @@ package sotd.song;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -17,9 +18,10 @@ public class SongOfDayRepository {
         this.jdbcClient = jdbcClient;
     }
 
-    public Optional<SongOfDayWinnerView> findCurrentWinner(String spotifyUserId, LocalDate localDate) {
+    public Optional<SongOfDayWinnerView> findCurrentWinner(UUID appUserId, LocalDate localDate) {
         return jdbcClient.sql("""
                 select
+                    sa.app_user_id,
                     sa.spotify_user_id,
                     sa.display_name,
                     sa.timezone,
@@ -30,13 +32,14 @@ public class SongOfDayRepository {
                 from spotify_account sa
                 join song_period_winner spw on spw.spotify_account_id = sa.id
                 join spotify_track st on st.spotify_track_id = spw.spotify_track_id
-                where sa.spotify_user_id = ?
+                where sa.app_user_id = ?
                   and spw.period_type = 'DAY'
                   and spw.period_start_local = ?
                 limit 1
                 """)
-                .params(spotifyUserId, localDate)
+                .params(appUserId, localDate)
                 .query((rs, rowNum) -> new SongOfDayWinnerView(
+                        rs.getObject("app_user_id", UUID.class),
                         rs.getString("spotify_user_id"),
                         rs.getString("display_name"),
                         rs.getString("timezone"),

@@ -1,26 +1,28 @@
 # sotd-api
 
-Private Spring Boot API for tracking Spotify listening history and surfacing a "song of the day" result backed by PostgreSQL.
+Private Spring Boot API for tracking Spotify listening history and surfacing user-scoped "song of the day" results backed by PostgreSQL.
 
 ## Current Status
 
-This repository is in the scaffold phase.
-
 Implemented now:
 
-- Spring Boot 4 baseline
-- Java 21 toolchain
+- Spring Boot 4 baseline on Java 21
 - PostgreSQL local Docker setup
-- Flyway migration baseline
+- Flyway-managed schema and schema evolution
 - shallow source layout under `src/main/sotd`
-- stub `GET /api/song-of-the-day` endpoint
+- Spotify Authorization Code flow
+- encrypted refresh-token storage
+- automatic access-token refresh for polling
+- recently-played polling and ingestion
+- daily song rollups and winner computation
+- user-scoped read endpoints under `/api/users/{appUserId}/...`
 
 Not implemented yet:
 
-- Spotify Authorization Code flow
-- token encryption and refresh handling
-- Spotify polling/ingestion jobs
-- DB-backed SOTD calculation
+- upstream user validation or authorization
+- frontend callback redirect flow
+- weekly, monthly, and yearly winner reads
+- deployment-grade shared OAuth state storage
 
 ## Stack
 
@@ -37,9 +39,10 @@ Not implemented yet:
 The long-term goal is to:
 
 1. connect a Spotify account once through backend-managed OAuth
-2. ingest listening history into PostgreSQL
-3. compute daily, weekly, monthly, and yearly winners from stored play events
-4. expose fast frontend-facing endpoints such as `song-of-the-day`
+2. bind that Spotify account to a stable upstream `app_user_id`
+3. ingest listening history into PostgreSQL
+4. compute daily, weekly, monthly, and yearly winners from stored play events
+5. expose fast frontend-facing endpoints such as `song-of-the-day`
 
 ## Project Layout
 
@@ -84,16 +87,23 @@ On startup, Flyway will apply the initial schema migration automatically.
 ### Run tests
 
 ```powershell
-.\gradlew.bat test
+.\gradlew.bat fullSuite
 ```
 
-### Hit the current endpoint
+### Current API shape
 
 ```powershell
-Invoke-RestMethod http://localhost:8080/api/song-of-the-day
+Invoke-RestMethod http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day
 ```
 
-Right now this returns a placeholder response because the Spotify ingestion and rollup logic is still pending.
+Key routes:
+
+- `GET /api/users/{appUserId}/spotify/connect`
+- `GET /api/spotify/callback`
+- `GET /api/users/{appUserId}/spotify/connection`
+- `GET /api/users/{appUserId}/song-of-the-day`
+
+The backend does not create users locally. It expects `{appUserId}` to come from your upstream account system.
 
 ## Database
 
@@ -113,16 +123,23 @@ Current core tables:
 
 ## Spotify Setup Notes
 
-The Spotify app registration can be prepared now, but end-to-end auth testing is not complete until the backend OAuth endpoints are implemented.
-
-The intended local callback URI is:
+Local callback URI:
 
 - `http://127.0.0.1:8080/api/spotify/callback`
 
+Local connect flow:
+
+- open `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connect` in a browser
+- complete Spotify auth
+- inspect the linked account at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
+- read the winner at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
+
+If you linked accounts before the `app_user_id` migration, re-run the connect flow through the user-scoped URL so the existing `spotify_account` row is attached to the correct UUID.
+
 ## Next Recommended Work
 
-1. Implement Spotify connect/callback endpoints.
-2. Add secure refresh-token storage.
-3. Build the recently-played ingestion service.
-4. Add JDBC repositories and DB-backed SOTD queries.
-5. Replace the stub endpoint with real rollup reads.
+1. Verify upstream auth so clients cannot request arbitrary user UUIDs.
+2. Add a first-class app-user profile model or trusted integration contract with the upstream user service.
+3. Expose weekly, monthly, and yearly winner endpoints.
+4. Replace in-memory OAuth state with a shared store for multi-instance deployment.
+5. Add operational dashboards around polling success, lag, and reauthorization status.

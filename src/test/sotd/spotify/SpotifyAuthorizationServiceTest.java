@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 import sotd.crypto.CryptoProperties;
@@ -31,7 +34,8 @@ class SpotifyAuthorizationServiceTest {
         Clock clock = Clock.fixed(Instant.parse("2026-03-17T20:00:00Z"), ZoneOffset.UTC);
         SpotifyProperties properties = configuredProperties();
         SpotifyAuthStateStore stateStore = mock(SpotifyAuthStateStore.class);
-        when(stateStore.issueState(Instant.parse("2026-03-17T20:10:00Z"))).thenReturn("state-123");
+        UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(stateStore.issueState(appUserId, Instant.parse("2026-03-17T20:10:00Z"))).thenReturn("state-123");
 
         SpotifyAuthorizationService service = new SpotifyAuthorizationService(
                 properties,
@@ -43,7 +47,7 @@ class SpotifyAuthorizationServiceTest {
                 clock
         );
 
-        URI authorizationUri = service.buildAuthorizationUri();
+        URI authorizationUri = service.buildAuthorizationUri(appUserId);
 
         assertThat(authorizationUri.toString())
                 .isEqualTo("https://accounts.spotify.test/authorize?response_type=code&client_id=client-id&redirect_uri=http://127.0.0.1:8080/api/spotify/callback&scope=user-read-private%20user-read-recently-played&state=state-123&show_dialog=true");
@@ -54,7 +58,8 @@ class SpotifyAuthorizationServiceTest {
         Clock clock = Clock.fixed(Instant.parse("2026-03-17T20:00:00Z"), ZoneOffset.UTC);
         SpotifyProperties properties = configuredProperties();
         SpotifyAuthStateStore stateStore = mock(SpotifyAuthStateStore.class);
-        when(stateStore.consume("state-123")).thenReturn(true);
+        UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(stateStore.consume("state-123")).thenReturn(Optional.of(appUserId));
 
         SpotifyAccountsClient accountsClient = mock(SpotifyAccountsClient.class);
         when(accountsClient.exchangeAuthorizationCode(anyString(), anyString(), anyString(), any(URI.class)))
@@ -85,12 +90,14 @@ class SpotifyAuthorizationServiceTest {
         SpotifyConnectionResponse response = service.handleCallback("code-123", "state-123", null);
 
         assertThat(response.status()).isEqualTo("connected");
+        assertThat(response.appUserId()).isEqualTo(appUserId);
         assertThat(response.spotifyUserId()).isEqualTo("spotify-user");
         assertThat(response.displayName()).isEqualTo("Luke");
         assertThat(response.grantedScope()).isEqualTo("user-read-private user-read-recently-played");
         assertThat(response.accessTokenExpiresAt()).isEqualTo(Instant.parse("2026-03-17T21:00:00Z"));
 
         verify(repository).saveOrUpdate(
+                eq(appUserId),
                 any(SpotifyCurrentUserProfile.class),
                 any(byte[].class),
                 anyString(),
@@ -105,7 +112,7 @@ class SpotifyAuthorizationServiceTest {
         Clock clock = Clock.fixed(Instant.parse("2026-03-17T20:00:00Z"), ZoneOffset.UTC);
         SpotifyProperties properties = configuredProperties();
         SpotifyAuthStateStore stateStore = mock(SpotifyAuthStateStore.class);
-        when(stateStore.consume("bad-state")).thenReturn(false);
+        when(stateStore.consume("bad-state")).thenReturn(Optional.empty());
 
         SpotifyAuthorizationService service = new SpotifyAuthorizationService(
                 properties,

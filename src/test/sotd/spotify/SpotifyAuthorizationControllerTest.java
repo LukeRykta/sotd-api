@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,10 +19,11 @@ class SpotifyAuthorizationControllerTest {
     @Test
     void connectReturnsRedirectToSpotifyAuthorizeUrl() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
-        when(service.buildAuthorizationUri()).thenReturn(URI.create("https://accounts.spotify.test/authorize"));
+        UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(service.buildAuthorizationUri(appUserId)).thenReturn(URI.create("https://accounts.spotify.test/authorize"));
         SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
 
-        ResponseEntity<Void> response = controller.connect();
+        ResponseEntity<Void> response = controller.connect(appUserId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FOUND);
         assertThat(response.getHeaders().getFirst(HttpHeaders.LOCATION))
@@ -33,6 +35,7 @@ class SpotifyAuthorizationControllerTest {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
         SpotifyConnectionResponse expected = new SpotifyConnectionResponse(
                 "connected",
+                UUID.fromString("11111111-1111-1111-1111-111111111111"),
                 "spotify-user",
                 "Luke",
                 "user-read-private",
@@ -50,10 +53,11 @@ class SpotifyAuthorizationControllerTest {
     @Test
     void getConnectionReturnsNotFoundWhenNoAccountLinked() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
-        when(service.getCurrentConnection()).thenReturn(Optional.empty());
+        UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(service.getCurrentConnection(appUserId)).thenReturn(Optional.empty());
         SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
 
-        ResponseEntity<SpotifyLinkedAccountView> response = controller.getConnection();
+        ResponseEntity<SpotifyLinkedAccountView> response = controller.getConnection(appUserId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }

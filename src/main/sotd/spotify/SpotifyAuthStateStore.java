@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,7 @@ public class SpotifyAuthStateStore {
 
     private final Clock clock;
     private final RandomStateGenerator randomStateGenerator;
-    private final Map<String, Instant> stateExpirations = new ConcurrentHashMap<>();
+    private final Map<String, IssuedState> issuedStates = new ConcurrentHashMap<>();
 
     @Autowired
     public SpotifyAuthStateStore(Clock clock) {
@@ -37,32 +38,38 @@ public class SpotifyAuthStateStore {
     /**
      * Issues a one-time state token that expires at the supplied timestamp.
      */
-    public String issueState(Instant expiresAt) {
+    public String issueState(UUID appUserId, Instant expiresAt) {
         evictExpired(clock.instant());
         String state = Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(randomStateGenerator.generate(STATE_BYTES));
-        stateExpirations.put(state, expiresAt);
+        issuedStates.put(state, new IssuedState(appUserId, expiresAt));
         return state;
     }
 
     /**
      * Consumes a state token once and returns whether it was valid and unexpired.
      */
-    public boolean consume(String state) {
+    public Optional<UUID> consume(String state) {
         if (state == null) {
-            return false;
+            return Optional.empty();
         }
 
         Instant now = clock.instant();
         evictExpired(now);
-        Instant expiresAt = stateExpirations.remove(state);
-        return Optional.ofNullable(expiresAt)
-                .map(expiry -> expiry.isAfter(now))
-                .orElse(false);
+        IssuedState issuedState = issuedStates.remove(state);
+        return Optional.ofNullable(issuedState)
+                .filter(savedState -> savedState.expiresAt().isAfter(now))
+                .map(IssuedState::appUserId);
     }
 
     private void evictExpired(Instant now) {
-        stateExpirations.entrySet().removeIf(entry -> !entry.getValue().isAfter(now));
+        issuedStates.entrySet().removeIf(entry -> !entry.getValue().expiresAt().isAfter(now));
+    }
+
+    record IssuedState(
+            UUID appUserId,
+            Instant expiresAt
+    ) {
     }
 }

@@ -4,9 +4,10 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import sotd.spotify.persistence.SpotifyAccountRepository;
+import sotd.spotify.persistence.SpotifyAccountRepository.LinkedSpotifyAccountIdentity;
 
 @Service
 public class SongOfDayService {
@@ -25,34 +26,18 @@ public class SongOfDayService {
         this.clock = clock;
     }
 
-    public SongOfDayResponse getCurrentSongOfDay(String spotifyUserId) {
-        Optional<ResolvedSongOfDayRequest> resolvedRequest = resolveRequest(spotifyUserId);
-        if (resolvedRequest.isEmpty()) {
-            return SongOfDayResponse.unavailable();
+    public SongOfDayResponse getCurrentSongOfDay(UUID appUserId) {
+        Optional<LinkedSpotifyAccountIdentity> linkedAccount = spotifyAccountRepository.findAccountIdentityByAppUserId(appUserId);
+        if (linkedAccount.isEmpty()) {
+            return SongOfDayResponse.unlinked(appUserId);
         }
 
         LocalDate localDate = clock.instant()
-                .atZone(ZoneId.of(resolvedRequest.get().timezone()))
+                .atZone(ZoneId.of(linkedAccount.get().timezone()))
                 .toLocalDate();
 
-        return songOfDayRepository.findCurrentWinner(resolvedRequest.get().spotifyUserId(), localDate)
+        return songOfDayRepository.findCurrentWinner(appUserId, localDate)
                 .map(SongOfDayResponse::available)
-                .orElseGet(SongOfDayResponse::unavailable);
-    }
-
-    private Optional<ResolvedSongOfDayRequest> resolveRequest(String spotifyUserId) {
-        if (StringUtils.hasText(spotifyUserId)) {
-            return spotifyAccountRepository.findTimezoneBySpotifyUserId(spotifyUserId)
-                    .map(timezone -> new ResolvedSongOfDayRequest(spotifyUserId, timezone));
-        }
-
-        return spotifyAccountRepository.findMostRecentAccountIdentity()
-                .map(account -> new ResolvedSongOfDayRequest(account.spotifyUserId(), account.timezone()));
-    }
-
-    private record ResolvedSongOfDayRequest(
-            String spotifyUserId,
-            String timezone
-    ) {
+                .orElseGet(() -> SongOfDayResponse.pending(appUserId));
     }
 }

@@ -4,8 +4,10 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import sotd.spotify.SpotifyLinkedAccountView;
 import sotd.spotify.client.SpotifyCurrentUserProfile;
 
@@ -13,8 +15,8 @@ import sotd.spotify.client.SpotifyCurrentUserProfile;
 /**
  * JDBC persistence for linked Spotify accounts.
  *
- * <p>The current repository shape assumes a private single-user app and exposes a "most recent account"
- * lookup for the `/api/spotify/connection` endpoint.
+ * <p>This repository models a one-to-one relationship between an upstream application user UUID and a
+ * linked Spotify account row used for polling and read APIs.
  */
 public class SpotifyAccountRepository {
 
@@ -27,7 +29,9 @@ public class SpotifyAccountRepository {
     /**
      * Upserts the linked Spotify account after a successful OAuth callback.
      */
+    @Transactional
     public void saveOrUpdate(
+            UUID appUserId,
             SpotifyCurrentUserProfile userProfile,
             byte[] encryptedRefreshToken,
             String scope,
@@ -35,8 +39,21 @@ public class SpotifyAccountRepository {
             Instant lastRefreshAt,
             String timezone
     ) {
+        // Keep the UUID-to-Spotify-account mapping one-to-one if the user reconnects with a different account.
+        jdbcClient.sql("""
+                update spotify_account
+                set app_user_id = null,
+                    status = 'DISCONNECTED',
+                    updated_at = current_timestamp
+                where app_user_id = ?
+                  and spotify_user_id <> ?
+                """)
+                .params(appUserId, userProfile.id())
+                .update();
+
         jdbcClient.sql("""
                 insert into spotify_account (
+                    app_user_id,
                     spotify_user_id,
                     display_name,
                     scope,
@@ -46,9 +63,10 @@ public class SpotifyAccountRepository {
                     timezone,
                     status,
                     updated_at
-                ) values (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', current_timestamp)
+                ) values (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', current_timestamp)
                 on conflict (spotify_user_id) do update
-                set display_name = excluded.display_name,
+                set app_user_id = excluded.app_user_id,
+                    display_name = excluded.display_name,
                     scope = excluded.scope,
                     refresh_token_encrypted = excluded.refresh_token_encrypted,
                     access_token_expires_at = excluded.access_token_expires_at,
@@ -58,6 +76,7 @@ public class SpotifyAccountRepository {
                     updated_at = current_timestamp
                 """)
                 .params(
+                        appUserId,
                         userProfile.id(),
                         userProfile.displayName(),
                         scope,
@@ -70,11 +89,12 @@ public class SpotifyAccountRepository {
     }
 
     /**
-     * Returns the most recently updated linked account row for the current single-user POC.
+     * Returns the linked account row for a specific application user.
      */
-    public Optional<SpotifyLinkedAccountView> findMostRecent() {
+    public Optional<SpotifyLinkedAccountView> findByAppUserId(UUID appUserId) {
         return jdbcClient.sql("""
                 select
+                    app_user_id,
                     spotify_user_id,
                     display_name,
                     scope,
@@ -84,10 +104,11 @@ public class SpotifyAccountRepository {
                     created_at,
                     updated_at
                 from spotify_account
-                order by updated_at desc
-                limit 1
+                where app_user_id = ?
                 """)
+                .param(appUserId)
                 .query((rs, rowNum) -> new SpotifyLinkedAccountView(
+                        rs.getObject("app_user_id", UUID.class),
                         rs.getString("spotify_user_id"),
                         rs.getString("display_name"),
                         rs.getString("scope"),
@@ -101,35 +122,23 @@ public class SpotifyAccountRepository {
     }
 
     /**
-     * Returns the spotify user id and timezone for the most recently updated linked account.
+     * Returns the linked account identity for a specific application user.
      */
-    public Optional<MostRecentSpotifyAccount> findMostRecentAccountIdentity() {
+    public Optional<LinkedSpotifyAccountIdentity> findAccountIdentityByAppUserId(UUID appUserId) {
         return jdbcClient.sql("""
                 select
+                    app_user_id,
                     spotify_user_id,
                     timezone
                 from spotify_account
-                order by updated_at desc
-                limit 1
+                where app_user_id = ?
                 """)
-                .query((rs, rowNum) -> new MostRecentSpotifyAccount(
+                .param(appUserId)
+                .query((rs, rowNum) -> new LinkedSpotifyAccountIdentity(
+                        rs.getObject("app_user_id", UUID.class),
                         rs.getString("spotify_user_id"),
                         rs.getString("timezone")
                 ))
-                .optional();
-    }
-
-    /**
-     * Returns the timezone for a specific linked Spotify user.
-     */
-    public Optional<String> findTimezoneBySpotifyUserId(String spotifyUserId) {
-        return jdbcClient.sql("""
-                select timezone
-                from spotify_account
-                where spotify_user_id = ?
-                """)
-                .param(spotifyUserId)
-                .query(String.class)
                 .optional();
     }
 
@@ -224,7 +233,8 @@ public class SpotifyAccountRepository {
         return timestamp != null ? timestamp.toInstant() : null;
     }
 
-    public record MostRecentSpotifyAccount(
+    public record LinkedSpotifyAccountIdentity(
+            UUID appUserId,
             String spotifyUserId,
             String timezone
     ) {

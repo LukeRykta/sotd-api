@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,11 +24,11 @@ import sotd.spotify.persistence.SpotifyAccountRepository;
 
 @Service
 /**
- * Coordinates the Spotify OAuth flow for the current private app.
+ * Coordinates the Spotify OAuth flow for user-scoped Spotify account linking.
  *
- * <p>This service currently handles initial account linking and account lookup. Background polling and
- * refresh-token reuse are implemented separately, but this auth flow still behaves like a single-user
- * entry point because it does not yet attach the linked Spotify account to a distinct application user.
+ * <p>The `app_user_id` comes from an upstream system. This service does not create or validate those
+ * users locally; it only binds a successful Spotify OAuth callback to the UUID carried through the
+ * one-time state token.
  */
 public class SpotifyAuthorizationService {
 
@@ -59,12 +60,12 @@ public class SpotifyAuthorizationService {
         this.clock = clock;
     }
 
-    public URI buildAuthorizationUri() {
+    public URI buildAuthorizationUri(UUID appUserId) {
         requireConfiguredCredentials();
 
         Instant now = clock.instant();
         Instant expiresAt = now.plus(spotifyProperties.getAuthStateTtl());
-        String state = authStateStore.issueState(expiresAt);
+        String state = authStateStore.issueState(appUserId, expiresAt);
         log.debug("Issued Spotify authorization state expiring at {}", expiresAt);
 
         return UriComponentsBuilder.fromUri(spotifyProperties.getAccountsBaseUrl())
@@ -91,10 +92,11 @@ public class SpotifyAuthorizationService {
             log.warn("Rejected Spotify callback because the authorization code was missing.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Spotify callback is missing the authorization code.");
         }
-        if (!authStateStore.consume(state)) {
-            log.warn("Rejected Spotify callback because the state token was invalid or expired.");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Spotify callback state is invalid or expired.");
-        }
+        UUID appUserId = authStateStore.consume(state)
+                .orElseThrow(() -> {
+                    log.warn("Rejected Spotify callback because the state token was invalid or expired.");
+                    return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Spotify callback state is invalid or expired.");
+                });
 
         SpotifyTokenResponse tokenResponse = spotifyAccountsClient.exchangeAuthorizationCode(
                 spotifyProperties.getClientId(),
@@ -112,6 +114,7 @@ public class SpotifyAuthorizationService {
         Instant tokenExpiresAt = clock.instant().plusSeconds(tokenResponse.expiresIn());
 
         spotifyAccountRepository.saveOrUpdate(
+                appUserId,
                 userProfile,
                 tokenEncryptionService.encrypt(tokenResponse.refreshToken()),
                 tokenResponse.scope(),
@@ -120,14 +123,16 @@ public class SpotifyAuthorizationService {
                 ZoneId.systemDefault().getId()
         );
         log.info(
-                "Linked Spotify account {} ({}) with token expiry at {}.",
+                "Linked Spotify account {} ({}) to app user {} with token expiry at {}.",
                 userProfile.id(),
                 userProfile.displayName(),
+                appUserId,
                 tokenExpiresAt
         );
 
         return new SpotifyConnectionResponse(
                 "connected",
+                appUserId,
                 userProfile.id(),
                 userProfile.displayName(),
                 tokenResponse.scope(),
@@ -135,8 +140,8 @@ public class SpotifyAuthorizationService {
         );
     }
 
-    public Optional<SpotifyLinkedAccountView> getCurrentConnection() {
-        return spotifyAccountRepository.findMostRecent();
+    public Optional<SpotifyLinkedAccountView> getCurrentConnection(UUID appUserId) {
+        return spotifyAccountRepository.findByAppUserId(appUserId);
     }
 
     private void requireConfiguredCredentials() {
