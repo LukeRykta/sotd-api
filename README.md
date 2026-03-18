@@ -106,8 +106,10 @@ The backend does not create users locally. It expects `{appUserId}` to come from
 
 User-scoped routes are protected by a signed upstream auth token. The upstream backend is expected to:
 
-- mint a short-lived token for a specific `app_user_id`
-- send it in the `X-SOTD-UPSTREAM-AUTH` header for server-to-server reads
+- verify its own user/session auth boundary
+- resolve the canonical persisted `app_user_id`
+- mint a short-lived JWT for a specific `app_user_id`
+- send it in the `Authorization: Bearer {jwt}` header for server-to-server reads
 - append it as the `upstreamAuth` query parameter for browser redirects to `/spotify/connect`
 
 ## Database
@@ -134,11 +136,11 @@ Local callback URI:
 
 Local connect flow:
 
-- generate a short-lived upstream auth token for the target UUID
+- generate a short-lived upstream auth JWT for the target UUID
 - open `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connect?upstreamAuth={token}` in a browser
 - complete Spotify auth
-- inspect the linked account with `X-SOTD-UPSTREAM-AUTH: {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
-- read the winner with `X-SOTD-UPSTREAM-AUTH: {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
+- inspect the linked account with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
+- read the winner with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/song-of-the-day`
 
 If you linked accounts before the `app_user_id` migration, re-run the connect flow through the user-scoped URL so the existing `spotify_account` row is attached to the correct UUID.
 
