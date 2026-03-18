@@ -22,7 +22,7 @@ Not implemented yet:
 
 - frontend callback redirect flow
 - weekly, monthly, and yearly winner reads
-- deployment-grade shared OAuth state storage
+- multi-replica poller coordination
 
 ## Stack
 
@@ -198,6 +198,6 @@ If you linked accounts before the `app_user_id` migration, re-run the connect fl
 
 1. Finalize the token-minting contract on the upstream backend that will call this service.
 2. Decide whether pairwise reads should support explicit date selection in addition to current-period reads.
-3. Replace in-memory OAuth state with a shared store for multi-instance deployment.
+3. Add cross-pod poller coordination before scaling beyond one replica.
 4. Add operational dashboards around polling success, lag, and reauthorization status.
 5. Add weekly, monthly, and yearly single-user winner endpoints to match the pairwise period support.

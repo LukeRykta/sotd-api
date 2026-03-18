@@ -24,7 +24,7 @@ class FlywaySchemaIntegrationTest extends PostgresJdbcIntegrationTestSupport {
                 .query(String.class)
                 .list();
 
-        assertThat(versions).containsExactly("1", "2", "3");
+        assertThat(versions).containsExactly("1", "2", "3", "4");
     }
 
     @Test
@@ -39,6 +39,7 @@ class FlywaySchemaIntegrationTest extends PostgresJdbcIntegrationTestSupport {
                       'spotify_artist',
                       'spotify_track_artist',
                       'playback_event',
+                      'spotify_auth_state',
                       'song_period_rollup',
                       'song_period_winner'
                   )
@@ -53,6 +54,7 @@ class FlywaySchemaIntegrationTest extends PostgresJdbcIntegrationTestSupport {
                 "song_period_winner",
                 "spotify_account",
                 "spotify_artist",
+                "spotify_auth_state",
                 "spotify_track",
                 "spotify_track_artist"
         );
