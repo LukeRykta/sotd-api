@@ -16,6 +16,7 @@ Implemented now:
 - recently-played polling and ingestion
 - daily song rollups and winner computation
 - period-based top-song reads built from daily rollups
+- listening-streak insights built from playback history and daily rollups
 - pairwise shared-song reads built from daily rollups
 - user-scoped read endpoints under `/api/users/{appUserId}/...`
 - custom Micrometer metrics for callback, token refresh, polling, and account-state health
@@ -127,6 +128,7 @@ Key routes:
 - `GET /api/users/{appUserId}/spotify/connection`
 - `DELETE /api/users/{appUserId}/spotify/connection`
 - `GET /api/users/{appUserId}/top-song?period=DAY|WEEK|MONTH|YEAR`
+- `GET /api/users/{appUserId}/listening-streaks?lookbackDays=90&repeatLimit=5`
 - `GET /api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY|WEEK|MONTH|YEAR`
 
 The backend does not create users locally. It expects `{appUserId}` to come from your upstream account system.

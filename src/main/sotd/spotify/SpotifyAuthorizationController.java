@@ -3,6 +3,8 @@ package sotd.spotify;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -45,9 +47,9 @@ public class SpotifyAuthorizationController {
             }
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "302", description = "Redirects to Spotify authorize page."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(responseCode = "302", description = "Redirects to Spotify authorize page.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<Void> connect(@PathVariable UUID appUserId) {
         URI authorizeUri = spotifyAuthorizationService.buildAuthorizationUri(appUserId);
@@ -62,10 +64,26 @@ public class SpotifyAuthorizationController {
             description = "Spotify redirects here after consent. This route exchanges the code and stores the encrypted refresh token. Failures return a structured JSON error body with an error code and callback stage."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Spotify account linked successfully."),
-            @ApiResponse(responseCode = "400", description = "Spotify callback input was invalid, state validation failed, or the user denied authorization."),
-            @ApiResponse(responseCode = "500", description = "The callback could not be completed because local persistence or configuration failed."),
-            @ApiResponse(responseCode = "502", description = "Spotify token exchange or profile lookup failed.")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Spotify account linked successfully.",
+                    content = @Content(schema = @Schema(implementation = SpotifyConnectionResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Spotify callback input was invalid, state validation failed, or the user denied authorization.",
+                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "The callback could not be completed because local persistence or configuration failed.",
+                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "502",
+                    description = "Spotify token exchange or profile lookup failed.",
+                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
+            )
     })
     public SpotifyConnectionResponse callback(
             @RequestParam(required = false) String code,
@@ -82,10 +100,14 @@ public class SpotifyAuthorizationController {
             security = @SecurityRequirement(name = OpenApiConfig.UPSTREAM_HEADER_AUTH_SCHEME)
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Linked Spotify account returned."),
-            @ApiResponse(responseCode = "404", description = "No Spotify account is linked for that user."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Linked Spotify account returned.",
+                    content = @Content(schema = @Schema(implementation = SpotifyLinkedAccountView.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "No Spotify account is linked for that user.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<SpotifyLinkedAccountView> getConnection(
             @Parameter(description = "Stable upstream application user UUID.", required = true)
@@ -103,9 +125,9 @@ public class SpotifyAuthorizationController {
             security = @SecurityRequirement(name = OpenApiConfig.UPSTREAM_HEADER_AUTH_SCHEME)
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Spotify account disconnected or already absent."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(responseCode = "204", description = "Spotify account disconnected or already absent.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<Void> disconnect(
             @Parameter(description = "Stable upstream application user UUID.", required = true)

@@ -13,6 +13,7 @@ This guide covers the full current HTTP surface of the app:
 - linked-account read
 - unlink
 - top-song
+- listening-streaks
 - our-song
 
 It is written for the app's current state, not a future roadmap state.
@@ -41,6 +42,7 @@ It is written for the app's current state, not a future roadmap state.
 ### Music insight reads
 
 - `GET /api/users/{appUserId}/top-song?period=DAY|WEEK|MONTH|YEAR`
+- `GET /api/users/{appUserId}/listening-streaks?lookbackDays=90&repeatLimit=5`
 - `GET /api/users/{appUserId}/our-song?otherUserId={otherUserId}&period=DAY|WEEK|MONTH|YEAR`
 
 ## Prerequisites
@@ -191,9 +193,10 @@ Recommended full sequence:
 6. post-link connection read
 7. polling/data verification
 8. top-song
-9. our-song
-10. unlink
-11. relink and gap preservation checks
+9. listening-streaks
+10. our-song
+11. unlink
+12. relink and gap preservation checks
 
 ## Endpoint-By-Endpoint Guide
 
@@ -242,6 +245,7 @@ What to verify:
 - `/api/users/{appUserId}/spotify/connection`
 - `DELETE /api/users/{appUserId}/spotify/connection`
 - `/api/users/{appUserId}/top-song`
+- `/api/users/{appUserId}/listening-streaks`
 - `/api/users/{appUserId}/our-song`
 
 ## 3. Actuator Health
@@ -453,7 +457,42 @@ Expected when:
 
 - no Spotify account is linked for that `appUserId`
 
-## 10. Our Song
+## 10. Listening Streaks
+
+Request shape:
+
+```text
+GET http://127.0.0.1:8080/api/users/11111111-1111-1111-1111-111111111111/listening-streaks?lookbackDays=90&repeatLimit=5
+```
+
+If auth enabled:
+
+```text
+Authorization: Bearer {token-for-profile-A}
+```
+
+Expected states:
+
+- `ready`
+- `no-data`
+- `unlinked`
+
+What to verify for `ready`:
+
+- `activeDayStreak.currentDays`
+- `activeDayStreak.longestDays`
+- `featuredTrackStreak`
+- `featuredArtistStreak`
+- `heaviestListeningDay`
+- `repeatOffenderTracks`
+
+Recommended checks:
+
+- `lookbackDays` is echoed correctly
+- `windowStartLocal` and `windowEndLocalExclusive` match the user's timezone
+- `repeatOffenderTracks` length respects `repeatLimit`
+
+## 11. Our Song
 
 Request shape:
 
@@ -501,7 +540,7 @@ Expected:
 
 - `400`
 
-## 11. Unlink
+## 12. Unlink
 
 Request:
 
@@ -533,7 +572,7 @@ Expected:
 
 - `204` both times
 
-## 12. Relink After Unlink
+## 13. Relink After Unlink
 
 Use the browser connect flow again for the same `appUserId`.
 
@@ -704,12 +743,13 @@ Use this as the most complete manual test:
 9. Verify `playback_event`, `song_period_rollup`, and `song_period_winner`.
 10. Call `GET /top-song?period=DAY` for profile A.
 11. Call `GET /top-song?period=MONTH` for profile B.
-12. Call `GET /our-song?...` for `DAY`.
-13. Call `GET /our-song?...` for `WEEK`.
-14. Call `GET /our-song?...` for `YEAR`.
-15. Call `DELETE /spotify/connection` for profile A.
-16. Re-check profile A connection, top-song, and our-song results.
-17. Reconnect profile A and confirm history returns without backfilling the disconnected gap.
+12. Call `GET /listening-streaks?lookbackDays=90&repeatLimit=5` for profile A.
+13. Call `GET /our-song?...` for `DAY`.
+14. Call `GET /our-song?...` for `WEEK`.
+15. Call `GET /our-song?...` for `YEAR`.
+16. Call `DELETE /spotify/connection` for profile A.
+17. Re-check profile A connection, top-song, listening-streaks, and our-song results.
+18. Reconnect profile A and confirm history returns without backfilling the disconnected gap.
 
 ## Troubleshooting
 
@@ -741,6 +781,14 @@ Check:
 
 - polling ran recently
 - `song_period_winner` has a row for that user/day
+
+### `no-data` on listening-streaks
+
+Check:
+
+- the user is actually linked
+- the requested lookback window contains playback events
+- `playback_event.played_date_local` has rows for that user in the window
 
 ### `no-common-song` on our-song
 
