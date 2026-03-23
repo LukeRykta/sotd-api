@@ -188,6 +188,7 @@ Production profile note:
 - `prod` automatically activates `container`, so structured JSON console logging remains enabled
 - `prod` also enables strict startup validation for required Spotify, crypto, redirect, and upstream JWT settings
 - `prod` defaults `server.forward-headers-strategy` to `framework` so trusted proxy headers are honored
+- if Swagger/OpenAPI still infers `http` instead of your public `https` origin behind a proxy, set `SOTD_OPENAPI_SERVER_URL` to the exact public API base URL used by `/docs`
 
 ## Deployment Note
 
