@@ -52,7 +52,6 @@ This project intentionally uses a flatter Java layout than the default IntelliJ/
 - `src/main/sotd` - application code
 - `src/main/resources` - app config and Flyway migrations
 - `src/test/sotd` - tests
-- `ai-docs/architecture/existing-app-architecture.md` - current runtime architecture diagrams and frontend integration caveats
 
 ## Local Development
 
