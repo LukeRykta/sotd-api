@@ -26,9 +26,14 @@ import sotd.config.OpenApiConfig;
 public class SpotifyAuthorizationController {
 
     private final SpotifyAuthorizationService spotifyAuthorizationService;
+    private final SpotifyCallbackRedirectService spotifyCallbackRedirectService;
 
-    public SpotifyAuthorizationController(SpotifyAuthorizationService spotifyAuthorizationService) {
+    public SpotifyAuthorizationController(
+            SpotifyAuthorizationService spotifyAuthorizationService,
+            SpotifyCallbackRedirectService spotifyCallbackRedirectService
+    ) {
         this.spotifyAuthorizationService = spotifyAuthorizationService;
+        this.spotifyCallbackRedirectService = spotifyCallbackRedirectService;
     }
 
     @GetMapping("/api/users/{appUserId}/spotify/connect")
@@ -61,36 +66,21 @@ public class SpotifyAuthorizationController {
     @GetMapping("/api/spotify/callback")
     @Operation(
             summary = "Spotify OAuth callback",
-            description = "Spotify redirects here after consent. This route exchanges the code and stores the encrypted refresh token. Failures return a structured JSON error body with an error code and callback stage."
+            description = "Spotify redirects here after consent. This route exchanges the code, stores the encrypted refresh token, and then redirects the browser to the configured frontend route with callback status query parameters."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Spotify account linked successfully.",
-                    content = @Content(schema = @Schema(implementation = SpotifyConnectionResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Spotify callback input was invalid, state validation failed, or the user denied authorization.",
-                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "The callback could not be completed because local persistence or configuration failed.",
-                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "502",
-                    description = "Spotify token exchange or profile lookup failed.",
-                    content = @Content(schema = @Schema(implementation = SpotifyCallbackErrorResponse.class))
-            )
+            @ApiResponse(responseCode = "302", description = "Redirects the browser to the configured frontend route with callback status query parameters.")
     })
-    public SpotifyConnectionResponse callback(
+    public ResponseEntity<Void> callback(
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String error
     ) {
-        return spotifyAuthorizationService.handleCallback(code, state, error);
+        SpotifyConnectionResponse response = spotifyAuthorizationService.handleCallback(code, state, error);
+        URI frontendRedirect = spotifyCallbackRedirectService.buildSuccessRedirect(response);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, frontendRedirect.toString())
+                .build();
     }
 
     @GetMapping("/api/users/{appUserId}/spotify/connection")

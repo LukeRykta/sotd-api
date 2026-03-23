@@ -46,6 +46,5 @@ bin/
 .DS_Store
 Thumbs.db
 
-# Keep source, reports, and wrapper files tracked
-!ai-docs/
-!ai-docs/**/*.md
+# Local generated AI notes and working docs
+/ai-docs/
