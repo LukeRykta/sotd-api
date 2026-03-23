@@ -32,6 +32,8 @@ class SongQueryRepositoryIntegrationTest extends PostgresJdbcIntegrationTestSupp
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         long accountId = insertSpotifyAccount(appUserId, "lukerykta", "Luke");
         insertSpotifyTrack("track-1", "Track One", "https://img.test/track-1.jpg");
+        insertSpotifyArtist("artist-1", "Artist One");
+        insertTrackArtist("track-1", "artist-1", 0);
         insertSongPeriodRollup(accountId, "track-1", LocalDate.parse("2026-03-18"), 4, 720_000L, "2026-03-18T21:00:00Z");
 
         TopSongWinnerView winner = topSongRepository.findTopSong(
@@ -45,6 +47,7 @@ class SongQueryRepositoryIntegrationTest extends PostgresJdbcIntegrationTestSupp
         assertThat(winner.appUserId()).isEqualTo(appUserId);
         assertThat(winner.spotifyUserId()).isEqualTo("lukerykta");
         assertThat(winner.trackName()).isEqualTo("Track One");
+        assertThat(winner.artistName()).isEqualTo("Artist One");
         assertThat(winner.imageUrl()).isEqualTo("https://img.test/track-1.jpg");
         assertThat(winner.playCount()).isEqualTo(4);
     }
@@ -58,6 +61,12 @@ class SongQueryRepositoryIntegrationTest extends PostgresJdbcIntegrationTestSupp
 
         insertSpotifyTrack("track-one-sided", "One Sided Song", "https://img.test/one-sided.jpg");
         insertSpotifyTrack("track-balanced", "Balanced Song", "https://img.test/balanced.jpg");
+        insertSpotifyArtist("artist-one-sided", "Solo Artist");
+        insertSpotifyArtist("artist-balanced-1", "Artist Alpha");
+        insertSpotifyArtist("artist-balanced-2", "Artist Beta");
+        insertTrackArtist("track-one-sided", "artist-one-sided", 0);
+        insertTrackArtist("track-balanced", "artist-balanced-1", 0);
+        insertTrackArtist("track-balanced", "artist-balanced-2", 1);
 
         LocalDate day = LocalDate.parse("2026-03-18");
 
@@ -78,6 +87,7 @@ class SongQueryRepositoryIntegrationTest extends PostgresJdbcIntegrationTestSupp
 
         assertThat(match.spotifyTrackId()).isEqualTo("track-balanced");
         assertThat(match.trackName()).isEqualTo("Balanced Song");
+        assertThat(match.artistName()).isEqualTo("Artist Alpha, Artist Beta");
         assertThat(match.imageUrl()).isEqualTo("https://img.test/balanced.jpg");
         assertThat(match.userPlayCount()).isEqualTo(3);
         assertThat(match.otherUserPlayCount()).isEqualTo(2);
@@ -114,6 +124,29 @@ class SongQueryRepositoryIntegrationTest extends PostgresJdbcIntegrationTestSupp
                 ) values (?, ?, ?, 180000)
                 """)
                 .params(spotifyTrackId, name, imageUrl)
+                .update();
+    }
+
+    private void insertSpotifyArtist(String spotifyArtistId, String name) {
+        jdbcClient.sql("""
+                insert into spotify_artist (
+                    spotify_artist_id,
+                    name
+                ) values (?, ?)
+                """)
+                .params(spotifyArtistId, name)
+                .update();
+    }
+
+    private void insertTrackArtist(String spotifyTrackId, String spotifyArtistId, int artistOrder) {
+        jdbcClient.sql("""
+                insert into spotify_track_artist (
+                    spotify_track_id,
+                    spotify_artist_id,
+                    artist_order
+                ) values (?, ?, ?)
+                """)
+                .params(spotifyTrackId, spotifyArtistId, artistOrder)
                 .update();
     }
 

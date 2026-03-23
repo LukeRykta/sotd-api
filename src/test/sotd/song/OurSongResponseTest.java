@@ -26,6 +26,7 @@ class OurSongResponseTest {
         assertThat(response.appUserId()).isEqualTo(appUserId);
         assertThat(response.otherUserId()).isEqualTo(otherUserId);
         assertThat(response.trackName()).isNull();
+        assertThat(response.artistName()).isNull();
         assertThat(response.imageUrl()).isNull();
         assertThat(response.combinedPlayCount()).isNull();
     }
@@ -60,6 +61,7 @@ class OurSongResponseTest {
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
+                "Artist Name",
                 "https://img.test/track-1.jpg",
                 3,
                 5,
@@ -71,6 +73,7 @@ class OurSongResponseTest {
 
         assertThat(response.status()).isEqualTo("ready");
         assertThat(response.trackName()).isEqualTo("Track Name");
+        assertThat(response.artistName()).isEqualTo("Artist Name");
         assertThat(response.imageUrl()).isEqualTo("https://img.test/track-1.jpg");
         assertThat(response.userPlayCount()).isEqualTo(3);
         assertThat(response.otherUserPlayCount()).isEqualTo(5);

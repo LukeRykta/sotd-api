@@ -50,11 +50,12 @@ class ListeningStreaksRepositoryIntegrationTest extends PostgresJdbcIntegrationT
                 .hasSize(2)
                 .extracting(
                         ListeningStreaksRepository.DailyTrackRollup::trackName,
+                        ListeningStreaksRepository.DailyTrackRollup::artistName,
                         ListeningStreaksRepository.DailyTrackRollup::imageUrl
                 )
                 .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple("Track One", "https://img.test/track-1.jpg"),
-                        org.assertj.core.groups.Tuple.tuple("Track Two", "https://img.test/track-2.jpg")
+                        org.assertj.core.groups.Tuple.tuple("Track One", "Artist One", "https://img.test/track-1.jpg"),
+                        org.assertj.core.groups.Tuple.tuple("Track Two", "Artist One, Artist Two", "https://img.test/track-2.jpg")
                 );
 
         assertThat(repository.findDailyArtistRollups(accountId, LocalDate.parse("2026-03-14"), LocalDate.parse("2026-03-16")))
