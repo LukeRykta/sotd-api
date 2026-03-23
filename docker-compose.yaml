@@ -27,7 +27,7 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - .env
+      - stack.env
     environment:
       SOTD_DATABASE_URL: jdbc:postgresql://postgres:5432/sotd
       SOTD_DATABASE_USERNAME: sotd
