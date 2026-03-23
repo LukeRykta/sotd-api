@@ -4,7 +4,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 /**
- * Structured callback failure used to keep `/api/spotify/callback` responses predictable.
+ * Structured callback failure used to keep `/api/spotify/callback` redirect parameters predictable.
  */
 public class SpotifyCallbackException extends RuntimeException {
 

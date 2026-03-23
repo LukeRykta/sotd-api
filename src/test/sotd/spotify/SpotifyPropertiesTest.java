@@ -17,6 +17,7 @@ class SpotifyPropertiesTest {
         assertThat(properties.getClientId()).isEmpty();
         assertThat(properties.getClientSecret()).isEmpty();
         assertThat(properties.getRedirectUri()).isEqualTo(URI.create("http://127.0.0.1:8080/api/spotify/callback"));
+        assertThat(properties.getCallbackFrontendRedirectUri()).isEqualTo(URI.create("/"));
         assertThat(properties.getScopes()).isEmpty();
         assertThat(properties.isShowDialog()).isFalse();
         assertThat(properties.getAuthStateTtl()).isEqualTo(Duration.ofMinutes(10));
@@ -33,6 +34,7 @@ class SpotifyPropertiesTest {
         properties.setClientId("client-id");
         properties.setClientSecret("client-secret");
         properties.setRedirectUri(URI.create("http://127.0.0.1:8080/api/spotify/callback"));
+        properties.setCallbackFrontendRedirectUri(URI.create("https://app.example.com/"));
         properties.setScopes(java.util.List.of("user-read-private"));
         properties.setShowDialog(true);
         properties.setAuthStateTtl(Duration.ofMinutes(15));
@@ -44,6 +46,7 @@ class SpotifyPropertiesTest {
         assertThat(properties.getClientId()).isEqualTo("client-id");
         assertThat(properties.getClientSecret()).isEqualTo("client-secret");
         assertThat(properties.getRedirectUri()).isEqualTo(URI.create("http://127.0.0.1:8080/api/spotify/callback"));
+        assertThat(properties.getCallbackFrontendRedirectUri()).isEqualTo(URI.create("https://app.example.com/"));
         assertThat(properties.getScopes()).containsExactly("user-read-private");
         assertThat(properties.isShowDialog()).isTrue();
         assertThat(properties.getAuthStateTtl()).isEqualTo(Duration.ofMinutes(15));

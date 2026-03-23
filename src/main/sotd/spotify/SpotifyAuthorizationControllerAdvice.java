@@ -1,25 +1,29 @@
 package sotd.spotify;
 
-import java.time.Clock;
+import java.net.URI;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Converts callback-specific failures into a stable JSON response for browser and proxy clients.
+ * Converts callback-specific failures into frontend redirects with stable query parameters.
  */
 @RestControllerAdvice(assignableTypes = SpotifyAuthorizationController.class)
 public class SpotifyAuthorizationControllerAdvice {
 
-    private final Clock clock;
+    private final SpotifyCallbackRedirectService spotifyCallbackRedirectService;
 
-    public SpotifyAuthorizationControllerAdvice(Clock clock) {
-        this.clock = clock;
+    public SpotifyAuthorizationControllerAdvice(SpotifyCallbackRedirectService spotifyCallbackRedirectService) {
+        this.spotifyCallbackRedirectService = spotifyCallbackRedirectService;
     }
 
     @ExceptionHandler(SpotifyCallbackException.class)
-    ResponseEntity<SpotifyCallbackErrorResponse> handleSpotifyCallbackException(SpotifyCallbackException ex) {
-        return ResponseEntity.status(ex.getStatus())
-                .body(SpotifyCallbackErrorResponse.from(ex, clock.instant()));
+    ResponseEntity<Void> handleSpotifyCallbackException(SpotifyCallbackException ex) {
+        URI frontendRedirect = spotifyCallbackRedirectService.buildFailureRedirect(ex);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, frontendRedirect.toString())
+                .build();
     }
 }
