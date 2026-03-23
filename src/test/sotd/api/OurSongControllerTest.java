@@ -28,6 +28,7 @@ class OurSongControllerTest {
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
+                "https://img.test/track-1.jpg",
                 3,
                 5,
                 8,

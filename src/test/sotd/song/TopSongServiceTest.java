@@ -39,6 +39,7 @@ class TopSongServiceTest {
                         LocalDate.parse("2026-03-16"),
                         "track-1",
                         "Track Name",
+                        "https://img.test/track-1.jpg",
                         4,
                         TopSongRepository.TIE_BREAK_RULE
                 )));
@@ -53,6 +54,7 @@ class TopSongServiceTest {
         assertThat(response.periodType()).isEqualTo(SongPeriodType.WEEK);
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-16"));
         assertThat(response.trackName()).isEqualTo("Track Name");
+        assertThat(response.imageUrl()).isEqualTo("https://img.test/track-1.jpg");
         assertThat(response.playCount()).isEqualTo(4);
     }
 

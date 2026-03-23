@@ -13,6 +13,7 @@ public record OurSongMatchView(
         LocalDate periodStartLocal,
         String spotifyTrackId,
         String trackName,
+        String imageUrl,
         int userPlayCount,
         int otherUserPlayCount,
         int combinedPlayCount,

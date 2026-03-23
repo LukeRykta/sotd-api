@@ -20,6 +20,7 @@ class TopSongResponseTest {
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-17"));
         assertThat(response.spotifyUserId()).isNull();
         assertThat(response.trackName()).isNull();
+        assertThat(response.imageUrl()).isNull();
     }
 
     @Test
@@ -34,5 +35,6 @@ class TopSongResponseTest {
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-01"));
         assertThat(response.spotifyUserId()).isNull();
         assertThat(response.trackName()).isNull();
+        assertThat(response.imageUrl()).isNull();
     }
 }

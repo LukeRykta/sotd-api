@@ -65,6 +65,7 @@ public class ListeningStreaksRepository {
                     spr.period_start_local,
                     spr.spotify_track_id,
                     st.name as track_name,
+                    st.image_url,
                     spr.play_count,
                     spr.last_played_at_utc
                 from song_period_rollup spr
@@ -80,6 +81,7 @@ public class ListeningStreaksRepository {
                         rs.getObject("period_start_local", LocalDate.class),
                         rs.getString("spotify_track_id"),
                         rs.getString("track_name"),
+                        rs.getString("image_url"),
                         rs.getInt("play_count"),
                         rs.getTimestamp("last_played_at_utc").toInstant()
                 ))
@@ -128,6 +130,7 @@ public class ListeningStreaksRepository {
             LocalDate dateLocal,
             String spotifyTrackId,
             String trackName,
+            String imageUrl,
             int playCount,
             Instant lastPlayedAtUtc
     ) {
