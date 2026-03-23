@@ -3,6 +3,8 @@ package sotd.spotify;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -50,9 +52,9 @@ public class SpotifyAuthorizationController {
             }
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "302", description = "Redirects to Spotify authorize page."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(responseCode = "302", description = "Redirects to Spotify authorize page.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<Void> connect(@PathVariable UUID appUserId) {
         URI authorizeUri = spotifyAuthorizationService.buildAuthorizationUri(appUserId);
@@ -88,10 +90,14 @@ public class SpotifyAuthorizationController {
             security = @SecurityRequirement(name = OpenApiConfig.UPSTREAM_HEADER_AUTH_SCHEME)
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Linked Spotify account returned."),
-            @ApiResponse(responseCode = "404", description = "No Spotify account is linked for that user."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Linked Spotify account returned.",
+                    content = @Content(schema = @Schema(implementation = SpotifyLinkedAccountView.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "No Spotify account is linked for that user.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<SpotifyLinkedAccountView> getConnection(
             @Parameter(description = "Stable upstream application user UUID.", required = true)
@@ -109,9 +115,9 @@ public class SpotifyAuthorizationController {
             security = @SecurityRequirement(name = OpenApiConfig.UPSTREAM_HEADER_AUTH_SCHEME)
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Spotify account disconnected or already absent."),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token."),
-            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.")
+            @ApiResponse(responseCode = "204", description = "Spotify account disconnected or already absent.", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid upstream auth token.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Upstream token does not match the requested UUID.", content = @Content)
     })
     public ResponseEntity<Void> disconnect(
             @Parameter(description = "Stable upstream application user UUID.", required = true)
