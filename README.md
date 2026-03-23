@@ -22,7 +22,6 @@ Implemented now:
 
 Not implemented yet:
 
-- frontend callback redirect flow
 - multi-replica poller coordination
 - historical date selection beyond current active periods
 
@@ -53,6 +52,7 @@ This project intentionally uses a flatter Java layout than the default IntelliJ/
 - `src/main/sotd` - application code
 - `src/main/resources` - app config and Flyway migrations
 - `src/test/sotd` - tests
+- `ai-docs/architecture/existing-app-architecture.md` - current runtime architecture diagrams and frontend integration caveats
 
 ## Local Development
 
@@ -139,14 +139,14 @@ User-scoped routes are protected by a signed upstream auth token. The upstream b
 - send it in the `Authorization: Bearer {jwt}` header for server-to-server reads
 - append it as the `upstreamAuth` query parameter for browser redirects to `/spotify/connect`
 
+`SOTD_UPSTREAM_AUTH_SHARED_SECRET` is the shared signing key between this API and the upstream backend that issues those JWTs. Keep the same value in both backend services' secret stores. Do not expose it to the frontend. In the browser-based `/spotify/connect` flow, the frontend may carry a short-lived signed token, but it must not know or generate the shared secret.
+
 For local development, the tracked `dev` profile disables that upstream JWT requirement so you can test the API without a second backend process. Use manual JWT generation only when you want to test the real auth contract locally.
 
-The Spotify callback now returns a structured JSON error body on failure with:
+The Spotify callback now redirects the browser to `SPOTIFY_CALLBACK_FRONTEND_REDIRECT_URI` after the code exchange completes. The redirect includes:
 
-- `errorCode`
-- `stage`
-- `message`
-- `appUserId` when the callback state was already validated
+- `spotifyAuthStatus=connected` on success with `appUserId`
+- `spotifyAuthStatus=error` on failure with `spotifyAuthErrorCode`, `spotifyAuthStage`, and `appUserId` when the callback state was already validated
 
 Useful operational endpoints:
 
@@ -226,8 +226,10 @@ Local callback URI:
 Local connect flow:
 
 - generate a short-lived upstream auth JWT for the target UUID
+- use the same `SOTD_UPSTREAM_AUTH_SHARED_SECRET` in the JWT issuer and this API when testing the real auth contract locally
 - open `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connect?upstreamAuth={token}` in a browser
 - complete Spotify auth
+- after Spotify redirects back to the API callback, the browser is redirected again to `SPOTIFY_CALLBACK_FRONTEND_REDIRECT_URI`
 - inspect the linked account with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
 - unlink the Spotify account with `Authorization: Bearer {token}` at `DELETE http://127.0.0.1:8080/api/users/{appUserId}/spotify/connection`
 - read the top song with `Authorization: Bearer {token}` at `http://127.0.0.1:8080/api/users/{appUserId}/top-song?period=DAY`

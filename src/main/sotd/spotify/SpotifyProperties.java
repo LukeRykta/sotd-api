@@ -10,8 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * External configuration for Spotify API integration.
  *
- * <p>This covers the auth endpoints, credentials, redirect URI, requested scopes, and planned polling
- * intervals for playback ingestion.
+ * <p>This covers the auth endpoints, credentials, Spotify callback URI, post-callback frontend
+ * redirect URI, requested scopes, and planned polling intervals for playback ingestion.
  */
 public class SpotifyProperties {
 
@@ -20,6 +20,7 @@ public class SpotifyProperties {
     private String clientId = "";
     private String clientSecret = "";
     private URI redirectUri = URI.create("http://127.0.0.1:8080/api/spotify/callback");
+    private URI callbackFrontendRedirectUri = URI.create("/");
     private List<String> scopes = new ArrayList<>();
     private boolean showDialog;
     private Duration authStateTtl = Duration.ofMinutes(10);
@@ -63,6 +64,14 @@ public class SpotifyProperties {
 
     public void setRedirectUri(URI redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public URI getCallbackFrontendRedirectUri() {
+        return callbackFrontendRedirectUri;
+    }
+
+    public void setCallbackFrontendRedirectUri(URI callbackFrontendRedirectUri) {
+        this.callbackFrontendRedirectUri = callbackFrontendRedirectUri;
     }
 
     public List<String> getScopes() {

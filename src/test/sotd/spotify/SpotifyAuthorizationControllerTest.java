@@ -19,9 +19,10 @@ class SpotifyAuthorizationControllerTest {
     @Test
     void connectReturnsRedirectToSpotifyAuthorizeUrl() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
+        SpotifyCallbackRedirectService redirectService = mock(SpotifyCallbackRedirectService.class);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(service.buildAuthorizationUri(appUserId)).thenReturn(URI.create("https://accounts.spotify.test/authorize"));
-        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
+        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service, redirectService);
 
         ResponseEntity<Void> response = controller.connect(appUserId);
 
@@ -31,8 +32,9 @@ class SpotifyAuthorizationControllerTest {
     }
 
     @Test
-    void callbackDelegatesToService() {
+    void callbackRedirectsBrowserToConfiguredFrontendRoute() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
+        SpotifyCallbackRedirectService redirectService = mock(SpotifyCallbackRedirectService.class);
         SpotifyConnectionResponse expected = new SpotifyConnectionResponse(
                 "connected",
                 UUID.fromString("11111111-1111-1111-1111-111111111111"),
@@ -41,21 +43,27 @@ class SpotifyAuthorizationControllerTest {
                 "user-read-private",
                 Instant.parse("2026-03-17T21:00:00Z")
         );
+        when(redirectService.buildSuccessRedirect(expected))
+                .thenReturn(URI.create("https://app.example.com/?spotifyAuthStatus=connected&appUserId=11111111-1111-1111-1111-111111111111"));
         when(service.handleCallback("code-123", "state-123", null)).thenReturn(expected);
-        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
+        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service, redirectService);
 
-        SpotifyConnectionResponse actual = controller.callback("code-123", "state-123", null);
+        ResponseEntity<Void> actual = controller.callback("code-123", "state-123", null);
 
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual.getStatusCode()).isEqualTo(HttpStatus.FOUND);
+        assertThat(actual.getHeaders().getFirst(HttpHeaders.LOCATION))
+                .isEqualTo("https://app.example.com/?spotifyAuthStatus=connected&appUserId=11111111-1111-1111-1111-111111111111");
         verify(service).handleCallback("code-123", "state-123", null);
+        verify(redirectService).buildSuccessRedirect(expected);
     }
 
     @Test
     void getConnectionReturnsNotFoundWhenNoAccountLinked() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
+        SpotifyCallbackRedirectService redirectService = mock(SpotifyCallbackRedirectService.class);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(service.getCurrentConnection(appUserId)).thenReturn(Optional.empty());
-        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
+        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service, redirectService);
 
         ResponseEntity<SpotifyLinkedAccountView> response = controller.getConnection(appUserId);
 
@@ -65,8 +73,9 @@ class SpotifyAuthorizationControllerTest {
     @Test
     void disconnectReturnsNoContentAndDelegatesToService() {
         SpotifyAuthorizationService service = mock(SpotifyAuthorizationService.class);
+        SpotifyCallbackRedirectService redirectService = mock(SpotifyCallbackRedirectService.class);
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service);
+        SpotifyAuthorizationController controller = new SpotifyAuthorizationController(service, redirectService);
 
         ResponseEntity<Void> response = controller.disconnect(appUserId);
 
