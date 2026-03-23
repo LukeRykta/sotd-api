@@ -17,6 +17,8 @@ COPY --chown=gradle:gradle build.gradle settings.gradle ./
 COPY --chown=gradle:gradle gradlew ./
 COPY --chown=gradle:gradle gradle gradle
 
+RUN chmod +x gradlew
+
 # Cache dependencies
 RUN ./gradlew --no-daemon dependencies
 
