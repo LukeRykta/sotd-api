@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,7 @@ import org.springframework.web.util.HtmlUtils;
 @Component
 public class SpotifyBrowserFlowErrorResolver extends AbstractHandlerExceptionResolver {
 
+    private static final Logger log = LoggerFactory.getLogger(SpotifyBrowserFlowErrorResolver.class);
     private final SpotifyProperties spotifyProperties;
 
     public SpotifyBrowserFlowErrorResolver(SpotifyProperties spotifyProperties) {
@@ -41,6 +44,13 @@ public class SpotifyBrowserFlowErrorResolver extends AbstractHandlerExceptionRes
         }
 
         BrowserFlowErrorView errorView = describeError(request, ex);
+        log.warn(
+                "Rendering Spotify browser-flow error page for {} {} with status {}: {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                errorView.status().value(),
+                StringUtils.hasText(errorView.detail()) ? errorView.detail() : errorView.message()
+        );
         response.setStatus(errorView.status().value());
         response.setContentType("text/html;charset=UTF-8");
         response.setHeader("Cache-Control", "no-store");
@@ -51,7 +61,7 @@ public class SpotifyBrowserFlowErrorResolver extends AbstractHandlerExceptionRes
             return new ModelAndView();
         }
         catch (IOException writeFailure) {
-            logger.warn("Failed to render Spotify browser-flow error page.", writeFailure);
+            log.warn("Failed to render Spotify browser-flow error page.", writeFailure);
             return null;
         }
     }

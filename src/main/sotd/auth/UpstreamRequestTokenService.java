@@ -9,6 +9,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 public class UpstreamRequestTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(UpstreamRequestTokenService.class);
 
     private final UpstreamAuthProperties upstreamAuthProperties;
     private final Clock clock;
@@ -45,6 +49,7 @@ public class UpstreamRequestTokenService {
 
     public VerifiedUpstreamRequest verify(String token) {
         if (!StringUtils.hasText(token)) {
+            log.warn("Rejected upstream authorization request because the token was missing.");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing upstream authorization token.");
         }
 
@@ -53,6 +58,7 @@ public class UpstreamRequestTokenService {
             decodedJwt = verifier().verify(token);
         }
         catch (JWTVerificationException ex) {
+            log.warn("Rejected upstream authorization token during verification: {}", ex.getMessage());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Upstream authorization token is invalid.", ex);
         }
 
@@ -62,10 +68,12 @@ public class UpstreamRequestTokenService {
         Instant now = clock.instant();
 
         if (issuedAt.isAfter(now.plus(upstreamAuthProperties.getClockSkew()))) {
+            log.warn("Rejected upstream authorization token because the issued-at time {} is in the future.", issuedAt);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Upstream authorization token issued-at time is invalid.");
         }
 
         if (expiresAt.plus(upstreamAuthProperties.getClockSkew()).isBefore(now)) {
+            log.warn("Rejected upstream authorization token because it expired at {}.", expiresAt);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Upstream authorization token has expired.");
         }
 
@@ -89,6 +97,7 @@ public class UpstreamRequestTokenService {
 
     private String requireConfiguredSharedSecret() {
         if (!StringUtils.hasText(upstreamAuthProperties.getSharedSecret())) {
+            log.error("Upstream authorization shared secret is not configured.");
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "SOTD_UPSTREAM_AUTH_SHARED_SECRET is not configured."
@@ -99,6 +108,7 @@ public class UpstreamRequestTokenService {
 
     private String requireConfiguredIssuer() {
         if (!StringUtils.hasText(upstreamAuthProperties.getIssuer())) {
+            log.error("Upstream authorization issuer is not configured.");
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "SOTD_UPSTREAM_AUTH_ISSUER is not configured."
@@ -109,6 +119,7 @@ public class UpstreamRequestTokenService {
 
     private String requireConfiguredAudience() {
         if (!StringUtils.hasText(upstreamAuthProperties.getAudience())) {
+            log.error("Upstream authorization audience is not configured.");
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "SOTD_UPSTREAM_AUTH_AUDIENCE is not configured."

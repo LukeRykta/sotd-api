@@ -2,6 +2,8 @@ package sotd.auth;
 
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.HandlerMapping;
 public class UpstreamAuthInterceptor implements HandlerInterceptor {
 
     static final String VERIFIED_APP_USER_ID_ATTRIBUTE = "verifiedAppUserId";
+    private static final Logger log = LoggerFactory.getLogger(UpstreamAuthInterceptor.class);
 
     private final UpstreamAuthProperties upstreamAuthProperties;
     private final UpstreamRequestTokenService upstreamRequestTokenService;
@@ -41,10 +44,33 @@ public class UpstreamAuthInterceptor implements HandlerInterceptor {
         }
 
         UUID pathAppUserId = parsePathUserId(uriVariables.get("appUserId"));
-        String token = resolveToken(request);
-        UpstreamRequestTokenService.VerifiedUpstreamRequest verifiedRequest = upstreamRequestTokenService.verify(token);
+        String tokenSource = resolveTokenSource(request);
+        String token = resolveToken(request, tokenSource);
+        UpstreamRequestTokenService.VerifiedUpstreamRequest verifiedRequest;
+        try {
+            verifiedRequest = upstreamRequestTokenService.verify(token);
+        }
+        catch (ResponseStatusException ex) {
+            log.warn(
+                    "Rejected upstream-auth request {} {} for appUserId={} via {} with status {}: {}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    pathAppUserId,
+                    tokenSource,
+                    ex.getStatusCode().value(),
+                    ex.getReason()
+            );
+            throw ex;
+        }
 
         if (!verifiedRequest.appUserId().equals(pathAppUserId)) {
+            log.warn(
+                    "Rejected upstream-auth request {} {} because token subject {} did not match path appUserId {}.",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    verifiedRequest.appUserId(),
+                    pathAppUserId
+            );
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Upstream authorization token does not match the requested user.");
         }
 
@@ -52,15 +78,26 @@ public class UpstreamAuthInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private String resolveToken(jakarta.servlet.http.HttpServletRequest request) {
+    private String resolveToken(jakarta.servlet.http.HttpServletRequest request, String tokenSource) {
         String headerToken = request.getHeader(upstreamAuthProperties.getHeaderName());
-        if (StringUtils.hasText(headerToken)) {
+        if ("authorization-header".equals(tokenSource) && StringUtils.hasText(headerToken)) {
             return extractBearerToken(headerToken);
         }
-        if (isBrowserConnectRequest(request)) {
+        if ("spotify-connect-query-parameter".equals(tokenSource)) {
             return request.getParameter(upstreamAuthProperties.getQueryParameterName());
         }
         return null;
+    }
+
+    private String resolveTokenSource(jakarta.servlet.http.HttpServletRequest request) {
+        String headerToken = request.getHeader(upstreamAuthProperties.getHeaderName());
+        if (StringUtils.hasText(headerToken)) {
+            return "authorization-header";
+        }
+        if (isBrowserConnectRequest(request)) {
+            return "spotify-connect-query-parameter";
+        }
+        return "none";
     }
 
     private boolean isBrowserConnectRequest(jakarta.servlet.http.HttpServletRequest request) {
