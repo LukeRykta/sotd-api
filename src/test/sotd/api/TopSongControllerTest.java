@@ -28,6 +28,7 @@ class TopSongControllerTest {
                 LocalDate.parse("2026-03-01"),
                 "track-1",
                 "Track Name",
+                "https://img.test/track-1.jpg",
                 4,
                 "rule"
         );

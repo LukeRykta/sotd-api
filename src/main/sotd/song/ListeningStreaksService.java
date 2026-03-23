@@ -124,6 +124,7 @@ public class ListeningStreaksService {
                 .map(candidate -> new ListeningStreaksResponse.FeaturedTrackStreak(
                         candidate.spotifyTrackId(),
                         candidate.trackName(),
+                        candidate.imageUrl(),
                         candidate.days(),
                         candidate.totalPlaysAcrossStreak(),
                         candidate.startLocal(),
@@ -179,6 +180,7 @@ public class ListeningStreaksService {
                     ? new TrackRepeatAggregate(
                     rollup.spotifyTrackId(),
                     rollup.trackName(),
+                    rollup.imageUrl(),
                     1,
                     rollup.playCount(),
                     rollup.dateLocal(),
@@ -187,6 +189,7 @@ public class ListeningStreaksService {
                     : new TrackRepeatAggregate(
                     existing.spotifyTrackId(),
                     existing.trackName(),
+                    existing.imageUrl(),
                     existing.activeDays() + 1,
                     existing.totalPlays() + rollup.playCount(),
                     existing.firstDayLocal(),
@@ -206,6 +209,7 @@ public class ListeningStreaksService {
                 .map(aggregate -> new ListeningStreaksResponse.RepeatOffenderTrack(
                         aggregate.spotifyTrackId(),
                         aggregate.trackName(),
+                        aggregate.imageUrl(),
                         aggregate.activeDays(),
                         aggregate.totalPlays(),
                         aggregate.firstDayLocal(),
@@ -302,6 +306,7 @@ public class ListeningStreaksService {
     private record TrackRepeatAggregate(
             String spotifyTrackId,
             String trackName,
+            String imageUrl,
             int activeDays,
             long totalPlays,
             LocalDate firstDayLocal,
@@ -312,6 +317,7 @@ public class ListeningStreaksService {
     private record TrackStreakCandidate(
             String spotifyTrackId,
             String trackName,
+            String imageUrl,
             int days,
             long totalPlaysAcrossStreak,
             LocalDate startLocal,
@@ -333,6 +339,7 @@ public class ListeningStreaksService {
     private record TrackStreakAccumulator(
             String spotifyTrackId,
             String trackName,
+            String imageUrl,
             int days,
             long totalPlaysAcrossStreak,
             LocalDate startLocal,
@@ -343,6 +350,7 @@ public class ListeningStreaksService {
             return new TrackStreakAccumulator(
                     rollup.spotifyTrackId(),
                     rollup.trackName(),
+                    rollup.imageUrl(),
                     1,
                     rollup.playCount(),
                     rollup.dateLocal(),
@@ -355,6 +363,7 @@ public class ListeningStreaksService {
             return new TrackStreakAccumulator(
                     spotifyTrackId,
                     trackName,
+                    imageUrl,
                     days + 1,
                     totalPlaysAcrossStreak + rollup.playCount(),
                     startLocal,
@@ -367,6 +376,7 @@ public class ListeningStreaksService {
             return new TrackStreakCandidate(
                     spotifyTrackId,
                     trackName,
+                    imageUrl,
                     days,
                     totalPlaysAcrossStreak,
                     startLocal,

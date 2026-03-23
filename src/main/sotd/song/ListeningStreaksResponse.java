@@ -144,6 +144,8 @@ public record ListeningStreaksResponse(
             String spotifyTrackId,
             @Schema(description = "Track name.", example = "Oye Como Va")
             String trackName,
+            @Schema(description = "Album artwork URL for the track when available.", example = "https://i.scdn.co/image/ab67616d0000b273...", nullable = true)
+            String imageUrl,
             @Schema(description = "Number of consecutive local days in the streak.", example = "3")
             Integer days,
             @Schema(description = "Total plays for the track across the streak.", example = "8")
@@ -195,6 +197,8 @@ public record ListeningStreaksResponse(
             String spotifyTrackId,
             @Schema(description = "Track name.", example = "Rocket Scientist (feat. Eve)")
             String trackName,
+            @Schema(description = "Album artwork URL for the track when available.", example = "https://i.scdn.co/image/ab67616d0000b273...", nullable = true)
+            String imageUrl,
             @Schema(description = "Number of separate active days for the track.", example = "6")
             Integer activeDays,
             @Schema(description = "Total plays across the window.", example = "11")

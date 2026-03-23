@@ -45,6 +45,7 @@ class OurSongServiceTest {
                 LocalDate.parse("2026-03-17"),
                 "track-1",
                 "Track Name",
+                "https://img.test/track-1.jpg",
                 3,
                 5,
                 8,
@@ -58,6 +59,7 @@ class OurSongServiceTest {
         assertThat(response.status()).isEqualTo("ready");
         assertThat(response.periodStartLocal()).isEqualTo(LocalDate.parse("2026-03-17"));
         assertThat(response.trackName()).isEqualTo("Track Name");
+        assertThat(response.imageUrl()).isEqualTo("https://img.test/track-1.jpg");
         assertThat(response.combinedPlayCount()).isEqualTo(8);
     }
 

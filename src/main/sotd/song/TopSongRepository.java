@@ -56,6 +56,7 @@ public class TopSongRepository {
                     a.timezone,
                     ar.spotify_track_id,
                     st.name as track_name,
+                    st.image_url,
                     ar.play_count
                 from aggregated_rollup ar
                 join spotify_track st on st.spotify_track_id = ar.spotify_track_id
@@ -76,6 +77,7 @@ public class TopSongRepository {
                         periodStartLocal,
                         rs.getString("spotify_track_id"),
                         rs.getString("track_name"),
+                        rs.getString("image_url"),
                         rs.getInt("play_count"),
                         TIE_BREAK_RULE
                 ))

@@ -68,6 +68,7 @@ public class OurSongRepository {
                 select
                     fr.spotify_track_id,
                     st.name as track_name,
+                    st.image_url,
                     fr.play_count as user_play_count,
                     sr.play_count as other_user_play_count,
                     fr.play_count + sr.play_count as combined_play_count
@@ -97,6 +98,7 @@ public class OurSongRepository {
                         periodStartLocal,
                         rs.getString("spotify_track_id"),
                         rs.getString("track_name"),
+                        rs.getString("image_url"),
                         rs.getInt("user_play_count"),
                         rs.getInt("other_user_play_count"),
                         rs.getInt("combined_play_count"),

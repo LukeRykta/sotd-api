@@ -24,8 +24,8 @@ class ListeningStreaksRepositoryIntegrationTest extends PostgresJdbcIntegrationT
     void repositoryReturnsAccountContextAndDailyRowsForStreakComputation() {
         UUID appUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         long accountId = insertSpotifyAccount(appUserId, "lukerykta", "Luke");
-        insertSpotifyTrack("track-1", "Track One");
-        insertSpotifyTrack("track-2", "Track Two");
+        insertSpotifyTrack("track-1", "Track One", "https://img.test/track-1.jpg");
+        insertSpotifyTrack("track-2", "Track Two", "https://img.test/track-2.jpg");
         insertSpotifyArtist("artist-1", "Artist One");
         insertSpotifyArtist("artist-2", "Artist Two");
         insertTrackArtist("track-1", "artist-1", 0);
@@ -48,8 +48,14 @@ class ListeningStreaksRepositoryIntegrationTest extends PostgresJdbcIntegrationT
 
         assertThat(repository.findDailyTrackRollups(accountId, LocalDate.parse("2026-03-14"), LocalDate.parse("2026-03-16")))
                 .hasSize(2)
-                .extracting(ListeningStreaksRepository.DailyTrackRollup::trackName)
-                .containsExactly("Track One", "Track Two");
+                .extracting(
+                        ListeningStreaksRepository.DailyTrackRollup::trackName,
+                        ListeningStreaksRepository.DailyTrackRollup::imageUrl
+                )
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("Track One", "https://img.test/track-1.jpg"),
+                        org.assertj.core.groups.Tuple.tuple("Track Two", "https://img.test/track-2.jpg")
+                );
 
         assertThat(repository.findDailyArtistRollups(accountId, LocalDate.parse("2026-03-14"), LocalDate.parse("2026-03-16")))
                 .hasSize(3)
@@ -75,15 +81,16 @@ class ListeningStreaksRepositoryIntegrationTest extends PostgresJdbcIntegrationT
                 .single();
     }
 
-    private void insertSpotifyTrack(String spotifyTrackId, String name) {
+    private void insertSpotifyTrack(String spotifyTrackId, String name, String imageUrl) {
         jdbcClient.sql("""
                 insert into spotify_track (
                     spotify_track_id,
                     name,
+                    image_url,
                     duration_ms
-                ) values (?, ?, 180000)
+                ) values (?, ?, ?, 180000)
                 """)
-                .params(spotifyTrackId, name)
+                .params(spotifyTrackId, name, imageUrl)
                 .update();
     }
 
