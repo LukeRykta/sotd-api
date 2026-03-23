@@ -35,11 +35,11 @@ class ListeningStreaksServiceTest {
                 ));
         when(repository.findDailyTrackRollups(7L, LocalDate.parse("2025-12-19"), LocalDate.parse("2026-03-19")))
                 .thenReturn(List.of(
-                        new DailyTrackRollup(LocalDate.parse("2026-03-14"), "track-a", "Track A", "https://img.test/track-a.jpg", 2, Instant.parse("2026-03-14T12:00:00Z")),
-                        new DailyTrackRollup(LocalDate.parse("2026-03-15"), "track-a", "Track A", "https://img.test/track-a.jpg", 3, Instant.parse("2026-03-15T12:00:00Z")),
-                        new DailyTrackRollup(LocalDate.parse("2026-03-16"), "track-a", "Track A", "https://img.test/track-a.jpg", 4, Instant.parse("2026-03-16T12:00:00Z")),
-                        new DailyTrackRollup(LocalDate.parse("2026-03-16"), "track-b", "Track B", "https://img.test/track-b.jpg", 5, Instant.parse("2026-03-16T13:00:00Z")),
-                        new DailyTrackRollup(LocalDate.parse("2026-03-18"), "track-b", "Track B", "https://img.test/track-b.jpg", 6, Instant.parse("2026-03-18T12:00:00Z"))
+                        new DailyTrackRollup(LocalDate.parse("2026-03-14"), "track-a", "Track A", "Artist A", "https://img.test/track-a.jpg", 2, Instant.parse("2026-03-14T12:00:00Z")),
+                        new DailyTrackRollup(LocalDate.parse("2026-03-15"), "track-a", "Track A", "Artist A", "https://img.test/track-a.jpg", 3, Instant.parse("2026-03-15T12:00:00Z")),
+                        new DailyTrackRollup(LocalDate.parse("2026-03-16"), "track-a", "Track A", "Artist A", "https://img.test/track-a.jpg", 4, Instant.parse("2026-03-16T12:00:00Z")),
+                        new DailyTrackRollup(LocalDate.parse("2026-03-16"), "track-b", "Track B", "Artist B", "https://img.test/track-b.jpg", 5, Instant.parse("2026-03-16T13:00:00Z")),
+                        new DailyTrackRollup(LocalDate.parse("2026-03-18"), "track-b", "Track B", "Artist B", "https://img.test/track-b.jpg", 6, Instant.parse("2026-03-18T12:00:00Z"))
                 ));
         when(repository.findDailyArtistRollups(7L, LocalDate.parse("2025-12-19"), LocalDate.parse("2026-03-19")))
                 .thenReturn(List.of(
@@ -60,6 +60,7 @@ class ListeningStreaksServiceTest {
         assertThat(response.activeDayStreak().longestDays()).isEqualTo(3);
         assertThat(response.activeDayStreak().includesToday()).isTrue();
         assertThat(response.featuredTrackStreak().spotifyTrackId()).isEqualTo("track-a");
+        assertThat(response.featuredTrackStreak().artistName()).isEqualTo("Artist A");
         assertThat(response.featuredTrackStreak().imageUrl()).isEqualTo("https://img.test/track-a.jpg");
         assertThat(response.featuredTrackStreak().days()).isEqualTo(3);
         assertThat(response.featuredTrackStreak().totalPlaysAcrossStreak()).isEqualTo(9L);
@@ -68,6 +69,7 @@ class ListeningStreaksServiceTest {
         assertThat(response.heaviestListeningDay().totalPlays()).isEqualTo(9L);
         assertThat(response.repeatOffenderTracks()).hasSize(2);
         assertThat(response.repeatOffenderTracks().get(0).spotifyTrackId()).isEqualTo("track-a");
+        assertThat(response.repeatOffenderTracks().get(0).artistName()).isEqualTo("Artist A");
         assertThat(response.repeatOffenderTracks().get(0).imageUrl()).isEqualTo("https://img.test/track-a.jpg");
         assertThat(response.repeatOffenderTracks().get(0).activeDays()).isEqualTo(3);
     }

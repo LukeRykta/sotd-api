@@ -68,6 +68,7 @@ public class OurSongRepository {
                 select
                     fr.spotify_track_id,
                     st.name as track_name,
+                    artists.artist_name,
                     st.image_url,
                     fr.play_count as user_play_count,
                     sr.play_count as other_user_play_count,
@@ -75,6 +76,12 @@ public class OurSongRepository {
                 from first_rollup fr
                 join second_rollup sr on sr.spotify_track_id = fr.spotify_track_id
                 join spotify_track st on st.spotify_track_id = fr.spotify_track_id
+                left join lateral (
+                    select string_agg(sa.name, ', ' order by sta.artist_order) as artist_name
+                    from spotify_track_artist sta
+                    join spotify_artist sa on sa.spotify_artist_id = sta.spotify_artist_id
+                    where sta.spotify_track_id = fr.spotify_track_id
+                ) artists on true
                 order by
                     least(fr.play_count, sr.play_count) desc,
                     fr.play_count + sr.play_count desc,
@@ -98,6 +105,7 @@ public class OurSongRepository {
                         periodStartLocal,
                         rs.getString("spotify_track_id"),
                         rs.getString("track_name"),
+                        rs.getString("artist_name"),
                         rs.getString("image_url"),
                         rs.getInt("user_play_count"),
                         rs.getInt("other_user_play_count"),

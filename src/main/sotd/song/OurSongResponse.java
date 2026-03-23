@@ -22,6 +22,8 @@ public record OurSongResponse(
         String spotifyTrackId,
         @Schema(description = "Winning shared track name when available.", example = "Oye Como Va", nullable = true)
         String trackName,
+        @Schema(description = "Ordered artist display name for the shared track when available.", example = "Santana", nullable = true)
+        String artistName,
         @Schema(description = "Album artwork URL for the shared track when available.", example = "https://i.scdn.co/image/ab67616d0000b273...", nullable = true)
         String imageUrl,
         @Schema(description = "Play count for the requesting user within the selected window.", example = "3", nullable = true)
@@ -54,6 +56,7 @@ public record OurSongResponse(
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -77,6 +80,7 @@ public record OurSongResponse(
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -91,6 +95,7 @@ public record OurSongResponse(
                 match.periodStartLocal(),
                 match.spotifyTrackId(),
                 match.trackName(),
+                match.artistName(),
                 match.imageUrl(),
                 match.userPlayCount(),
                 match.otherUserPlayCount(),

@@ -65,11 +65,18 @@ public class ListeningStreaksRepository {
                     spr.period_start_local,
                     spr.spotify_track_id,
                     st.name as track_name,
+                    artists.artist_name,
                     st.image_url,
                     spr.play_count,
                     spr.last_played_at_utc
                 from song_period_rollup spr
                 join spotify_track st on st.spotify_track_id = spr.spotify_track_id
+                left join lateral (
+                    select string_agg(sa.name, ', ' order by sta.artist_order) as artist_name
+                    from spotify_track_artist sta
+                    join spotify_artist sa on sa.spotify_artist_id = sta.spotify_artist_id
+                    where sta.spotify_track_id = spr.spotify_track_id
+                ) artists on true
                 where spr.spotify_account_id = ?
                   and spr.period_type = 'DAY'
                   and spr.period_start_local >= ?
@@ -81,6 +88,7 @@ public class ListeningStreaksRepository {
                         rs.getObject("period_start_local", LocalDate.class),
                         rs.getString("spotify_track_id"),
                         rs.getString("track_name"),
+                        rs.getString("artist_name"),
                         rs.getString("image_url"),
                         rs.getInt("play_count"),
                         rs.getTimestamp("last_played_at_utc").toInstant()
@@ -130,6 +138,7 @@ public class ListeningStreaksRepository {
             LocalDate dateLocal,
             String spotifyTrackId,
             String trackName,
+            String artistName,
             String imageUrl,
             int playCount,
             Instant lastPlayedAtUtc

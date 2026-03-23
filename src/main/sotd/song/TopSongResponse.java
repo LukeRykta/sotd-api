@@ -24,6 +24,8 @@ public record TopSongResponse(
         String spotifyTrackId,
         @Schema(description = "Winning track name when a winner exists.", example = "Oye Como Va", nullable = true)
         String trackName,
+        @Schema(description = "Ordered artist display name for the winning track when available.", example = "Santana", nullable = true)
+        String artistName,
         @Schema(description = "Album artwork URL for the winning track when available.", example = "https://i.scdn.co/image/ab67616d0000b273...", nullable = true)
         String imageUrl,
         @Schema(description = "Winning play count for the selected period.", example = "2", nullable = true)
@@ -45,6 +47,7 @@ public record TopSongResponse(
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -58,6 +61,7 @@ public record TopSongResponse(
                 null,
                 periodType,
                 periodStartLocal,
+                null,
                 null,
                 null,
                 null,
@@ -77,6 +81,7 @@ public record TopSongResponse(
                 winner.periodStartLocal(),
                 winner.spotifyTrackId(),
                 winner.trackName(),
+                winner.artistName(),
                 winner.imageUrl(),
                 winner.playCount(),
                 winner.tieBreakRule()

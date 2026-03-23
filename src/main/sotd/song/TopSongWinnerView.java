@@ -15,6 +15,7 @@ public record TopSongWinnerView(
         LocalDate periodStartLocal,
         String spotifyTrackId,
         String trackName,
+        String artistName,
         String imageUrl,
         int playCount,
         String tieBreakRule
